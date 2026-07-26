@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VIER×DREI — Rätsel bauen</title>
+<meta name="theme-color" content="#12243B">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ground:#12243B; --ground-2:#0B1726; --rule:#26405E; --card:#F2EDE3; --card-edge:#D6CDBC;
+  --ink:#101820; --brass:#D9A441; --t1:#F2B705; --t2:#2F9E62; --t3:#2D74C4; --t4:#8558C4;
+  --sans:"IBM Plex Sans",system-ui,sans-serif; --disp:"Oswald",sans-serif; --mono:"IBM Plex Mono",monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--ground);background-image:radial-gradient(120% 80% at 50% -10%,#1B3555 0%,var(--ground) 55%,var(--ground-2) 100%);
+  background-attachment:fixed;color:var(--card);font-family:var(--sans);
+  padding:max(12px,env(safe-area-inset-top)) 12px max(24px,env(safe-area-inset-bottom));display:flex;justify-content:center}
+.wrap{width:100%;max-width:520px}
+header{display:flex;align-items:center;justify-content:space-between;padding-bottom:8px}
+.mark{font-family:var(--disp);font-weight:600;font-size:22px;letter-spacing:.1em}
+.mark .x{color:var(--brass);font-size:.8em}
+a.back{color:#9FB3C9;font-size:13px;text-decoration:none;border:1px solid var(--rule);border-radius:8px;padding:7px 11px}
+a.back:hover{background:#1E3A5A}
+h1{font-family:var(--disp);font-weight:500;font-size:19px;letter-spacing:.09em;text-transform:uppercase;margin:14px 0 4px}
+p.lead{font-size:13.5px;color:#9FB3C9;line-height:1.6;margin:0 0 16px}
+label{display:block;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#93A7BC;margin:0 0 4px}
+input{width:100%;background:#0E1E33;border:1px solid var(--rule);border-radius:8px;color:var(--card);
+  font-family:var(--sans);font-size:15px;padding:10px 11px;min-height:42px}
+input:focus{outline:2px solid var(--brass);outline-offset:1px}
+.row{display:flex;gap:8px}
+.row>div{flex:1;min-width:0}
+fieldset{border:1px solid var(--rule);border-left-width:4px;border-radius:10px;margin:12px 0;padding:12px}
+fieldset:nth-of-type(1){border-left-color:var(--t1)} fieldset:nth-of-type(2){border-left-color:var(--t2)}
+fieldset:nth-of-type(3){border-left-color:var(--t3)} fieldset:nth-of-type(4){border-left-color:var(--t4)}
+legend{font-family:var(--disp);font-size:12px;letter-spacing:.1em;text-transform:uppercase;padding:0 6px;color:#C9D6E4}
+.field{margin-bottom:10px}
+#vorschau{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:6px 0 14px}
+.pv{flex:0 0 calc((100% - 16px)/3);aspect-ratio:1/.72;min-height:60px;border-radius:9px;background:var(--card);color:var(--ink);
+  font-family:var(--disp);font-weight:500;font-size:clamp(10px,3.2vw,15px);display:grid;place-items:center;text-align:center;
+  padding:5px;box-shadow:0 2px 0 var(--card-edge);word-break:break-word}
+.pv.leer{background:#0E1E33;color:#40587A;box-shadow:inset 0 0 0 1px var(--rule)}
+.pv.nabel{box-shadow:0 0 0 3px var(--brass),0 2px 0 var(--card-edge)}
+#pruef{font-size:13px;line-height:1.7;margin:0 0 14px;padding:11px 13px;border-radius:9px;border:1px solid var(--rule);background:#0E1E33}
+#pruef .ok{color:#6FD39B} #pruef .no{color:#F08A7A}
+.btn{font-family:var(--sans);font-size:13.5px;padding:11px 15px;border-radius:9px;border:1px solid var(--rule);
+  background:#16294180;color:var(--card);cursor:pointer;min-height:44px}
+.btn:hover:not(:disabled){background:#1E3A5A}
+.btn:disabled{opacity:.38;cursor:default}
+.btn.primary{background:var(--brass);border-color:var(--brass);color:#1A1204;font-weight:600}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+textarea{width:100%;min-height:190px;background:#0B1726;border:1px solid var(--rule);border-radius:9px;color:#C9D6E4;
+  font-family:var(--mono);font-size:12px;line-height:1.55;padding:11px;resize:vertical}
+.hint{font-size:12px;color:#93A7BC;line-height:1.65}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="mark">VIER<span class="x">×</span>DREI</div>
+    <a class="back" href="index.html">← Spiel</a>
+  </header>
+
+  <h1>Rätsel bauen</h1>
+  <p class="lead">Wähle zuerst das <b>Nabelwort</b> — das Wort, das in alle vier Kategorien passt. Dann je zwei weitere Wörter pro Kategorie. Jedes dieser Wörter darf <b>nur</b> in seine eigene Kategorie passen, sonst hat das Rätsel mehr als eine Lösung.</p>
+
+  <div class="row">
+    <div class="field" style="flex:2"><label for="nabel">Nabelwort</label><input id="nabel" placeholder="BANK" autocomplete="off"></div>
+    <div class="field" style="flex:1"><label for="emoji">Emoji</label><input id="emoji" placeholder="🏦" autocomplete="off"></div>
+  </div>
+  <div class="field"><label for="autor">Dein Name</label><input id="autor" placeholder="Ikarus" autocomplete="off"></div>
+
+  <div id="gruppen"></div>
+
+  <h1>Vorschau</h1>
+  <div id="vorschau"></div>
+  <div id="pruef"></div>
+
+  <div class="actions">
+    <button class="btn primary" id="kopieren" disabled>Code kopieren</button>
+    <button class="btn" id="link" disabled>Direktlink kopieren</button>
+    <button class="btn" id="testen" disabled>Jetzt spielen</button>
+  </div>
+
+  <textarea id="ausgabe" readonly spellcheck="false"></textarea>
+  <p class="hint">Der Code kommt ans Ende der Liste in <b>puzzles.js</b> — die <code>id</code> ist schon hochgezählt. Danach <code>tests/run.sh</code> laufen lassen; die Datenprüfung dort fängt dieselben Fehler wie die Vorschau oben.</p>
+</div>
+
+<script>
+"use strict";
+var STUFEN = ["Stufe 1 — am leichtesten", "Stufe 2", "Stufe 3", "Stufe 4 — am fiesesten"];
+var G = document.getElementById("gruppen");
+STUFEN.forEach(function (s, i) {
+  var fs = document.createElement("fieldset");
+  fs.innerHTML =
+    '<legend>' + s + '</legend>' +
+    '<div class="field"><label for="t' + i + '">Kategorie</label><input id="t' + i + '" placeholder="Zum Sitzen" autocomplete="off"></div>' +
+    '<div class="row"><div class="field"><label for="a' + i + '">Wort</label><input id="a' + i + '" autocomplete="off"></div>' +
+    '<div class="field"><label for="b' + i + '">Wort</label><input id="b' + i + '" autocomplete="off"></div></div>';
+  G.appendChild(fs);
+});
+
+function $(id) { return document.getElementById(id); }
+function norm(s) { return (s || "").trim().toUpperCase().replace(/ß/g, "SS"); }
+
+function lies() {
+  var r = { id: null, nabel: norm($("nabel").value), emoji: ($("emoji").value || "").trim(),
+            autor: ($("autor").value || "").trim(), gruppen: [] };
+  for (var i = 0; i < 4; i++) {
+    r.gruppen.push({ titel: ($("t" + i).value || "").trim(), woerter: [norm($("a" + i).value), norm($("b" + i).value)] });
+  }
+  return r;
+}
+
+/* Dieselben Regeln wie tests/daten.test.js — hier nur früher sichtbar. */
+function pruefe(r) {
+  var f = [];
+  if (!r.nabel) f.push("Nabelwort fehlt.");
+  if (!r.emoji) f.push("Emoji fehlt (fürs Feuerwerk am Ende).");
+  var alle = [r.nabel].concat(r.gruppen[0].woerter, r.gruppen[1].woerter, r.gruppen[2].woerter, r.gruppen[3].woerter);
+  var leer = alle.filter(function (w) { return !w; }).length;
+  if (leer) f.push(leer + " Wortfeld" + (leer > 1 ? "er sind" : " ist") + " noch leer.");
+  r.gruppen.forEach(function (g, i) { if (!g.titel) f.push("Kategorie " + (i + 1) + " hat keinen Titel."); });
+  var gefuellt = alle.filter(Boolean);
+  var doppelt = gefuellt.filter(function (w, i) { return gefuellt.indexOf(w) !== i; });
+  [].concat(doppelt).forEach(function (w) { f.push("„" + w + "“ steht mehrfach im Rätsel — nur das Nabelwort darf das."); });
+  gefuellt.forEach(function (w) {
+    if (w.length > 13) f.push("„" + w + "“ ist zu lang für eine Karte (max. 13 Zeichen).");
+    if (/\s/.test(w)) f.push("„" + w + "“ enthält ein Leerzeichen.");
+  });
+  r.gruppen.forEach(function (g) { if (g.titel.length > 34) f.push("Titel „" + g.titel + "“ passt nicht auf die Plakette."); });
+  return f;
+}
+
+function zeichne() {
+  var r = lies(), fehler = pruefe(r);
+  var felder = [r.nabel].concat(r.gruppen[0].woerter, r.gruppen[1].woerter, r.gruppen[2].woerter, r.gruppen[3].woerter);
+  var v = $("vorschau"); v.innerHTML = "";
+  felder.forEach(function (w, i) {
+    var d = document.createElement("div");
+    d.className = "pv" + (w ? "" : " leer") + (i === 0 && w ? " nabel" : "");
+    d.textContent = w || "—";
+    v.appendChild(d);
+  });
+  $("pruef").innerHTML = fehler.length
+    ? '<span class="no">Noch nicht fertig:</span><br>' + fehler.map(function (x) { return "· " + x; }).join("<br>")
+    : '<span class="ok">Sieht gut aus.</span> Neun Wörter, vier Kategorien, ein Nabelwort in allen vier.';
+
+  var bereit = fehler.length === 0;
+  ["kopieren", "link", "testen"].forEach(function (id) { $(id).disabled = !bereit; });
+  $("ausgabe").value = bereit ? code(r) : "";
+}
+
+function code(r) {
+  var g = r.gruppen.map(function (x) {
+    return '      { titel: ' + JSON.stringify(x.titel) + ', woerter: ' + JSON.stringify(x.woerter) + ' }';
+  }).join(",\n");
+  return "  {\n" +
+    "    id: NÄCHSTE_ID, nabel: " + JSON.stringify(r.nabel) + ", emoji: " + JSON.stringify(r.emoji) +
+    ", autor: " + JSON.stringify(r.autor || "") + ",\n" +
+    "    gruppen: [\n" + g + "\n    ]\n" +
+    "  }";
+}
+
+function direktlink(r) {
+  var j = JSON.stringify({ nabel: r.nabel, emoji: r.emoji, autor: r.autor, gruppen: r.gruppen });
+  var b = btoa(unescape(encodeURIComponent(j))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  return location.href.replace(/build\.html.*$/, "index.html") + "#p=" + b;
+}
+
+function kopiere(text, knopf, label) {
+  var alt = knopf.textContent;
+  function fertig() { knopf.textContent = label; setTimeout(function () { knopf.textContent = alt; }, 1400); }
+  if (navigator.clipboard) navigator.clipboard.writeText(text).then(fertig, function () { prompt("Kopieren:", text); });
+  else prompt("Kopieren:", text);
+}
+
+$("kopieren").onclick = function () { kopiere($("ausgabe").value, this, "Kopiert"); };
+$("link").onclick = function () { kopiere(direktlink(lies()), this, "Kopiert"); };
+$("testen").onclick = function () { location.href = direktlink(lies()); };
+document.addEventListener("input", zeichne);
+zeichne();
+</script>
+</body>
+</html>

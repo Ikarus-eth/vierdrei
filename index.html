@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VIER×DREI — das tägliche Worträtsel</title>
+<meta name="description" content="Vier Kategorien. Drei Wörter je Kategorie. Ein Wort steht in allen vier. Jeden Tag ein neues deutsches Rätsel.">
+<meta name="theme-color" content="#12243B">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ground:#12243B; --ground-2:#0B1726; --rule:#26405E;
+  --card:#F2EDE3; --card-edge:#D6CDBC; --ink:#101820; --ink-soft:#4A5766;
+  --paper-dim:#B9AF9C;
+  --brass:#D9A441;
+  --t1:#F2B705; --t2:#2F9E62; --t3:#2D74C4; --t4:#8558C4;
+  --gap:10px;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,sans-serif;
+  --disp:"Oswald",Impact,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--ground);
+  background-image:radial-gradient(120% 80% at 50% -10%, #1B3555 0%, var(--ground) 55%, var(--ground-2) 100%);
+  background-attachment:fixed;
+  color:var(--card); font-family:var(--sans);
+  min-height:100svh; display:flex; flex-direction:column; align-items:center;
+  padding:max(10px,env(safe-area-inset-top)) 12px max(16px,env(safe-area-inset-bottom));
+  overscroll-behavior-y:contain;
+}
+.wrap{width:100%;max-width:520px;display:flex;flex-direction:column;flex:1}
+
+/* ---------- Kopf ---------- */
+header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:2px 0 8px}
+.mark{font-family:var(--disp);font-weight:600;font-size:26px;letter-spacing:.10em;line-height:1;
+  color:var(--card);display:flex;align-items:baseline;gap:.12em}
+.mark .x{color:var(--brass);font-size:.8em;transform:translateY(-.04em)}
+.tools{display:flex;gap:6px}
+.tool{width:34px;height:34px;border-radius:8px;border:1px solid var(--rule);background:#16294180;
+  color:var(--card);font-size:15px;display:grid;place-items:center;cursor:pointer;font-family:var(--sans)}
+.tool:hover{background:#1E3A5A}
+.tool:focus-visible,.btn:focus-visible,.card:focus-visible,.linkish:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+.tagline{font-size:12.5px;color:#9FB3C9;letter-spacing:.01em;margin:0 0 12px;line-height:1.45}
+
+/* ---------- Statusleiste ---------- */
+.status{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:7px 2px;margin-bottom:12px}
+.status .left{display:flex;align-items:center;gap:10px}
+.pill{font-family:var(--mono);font-size:11px;color:#9FB3C9;letter-spacing:.04em}
+.pill b{color:var(--card);font-weight:600}
+.modes{display:flex;border:1px solid var(--rule);border-radius:7px;overflow:hidden}
+.modes button{font-family:var(--sans);font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+  background:transparent;color:#9FB3C9;border:0;padding:5px 9px;cursor:pointer}
+.modes button[aria-pressed="true"]{background:var(--brass);color:#1A1204;font-weight:600}
+
+/* ---------- Gelöste Kategorien ---------- */
+#geloest{display:flex;flex-direction:column;gap:8px;margin-bottom:var(--gap)}
+.plaque{border-radius:10px;padding:9px 12px;display:flex;flex-direction:column;gap:2px;
+  box-shadow:inset 0 0 0 1px #0000001f, 0 1px 0 #ffffff40 inset;animation:drop .32s cubic-bezier(.2,.9,.3,1.2)}
+.plaque .head{display:flex;align-items:center;gap:7px}
+.chip{font-family:var(--mono);font-size:10px;font-weight:600;background:#00000033;border-radius:4px;padding:1px 5px}
+.plaque .titel{font-family:var(--disp);font-weight:500;font-size:14px;letter-spacing:.08em;text-transform:uppercase}
+.plaque .woerter{font-size:12.5px;letter-spacing:.03em;opacity:.9}
+@keyframes drop{from{opacity:0;transform:translateY(-8px) scale(.98)}to{opacity:1;transform:none}}
+
+/* ---------- Raster ---------- */
+#raster{display:flex;flex-wrap:wrap;gap:var(--gap);justify-content:center;margin-bottom:14px}
+.card{
+  position:relative; flex:0 0 calc((100% - 2*var(--gap))/3);
+  aspect-ratio:1/.72; min-height:66px;
+  border:0;border-radius:10px; background:var(--card); color:var(--ink);
+  font-family:var(--disp); font-weight:500; letter-spacing:.03em;
+  font-size:clamp(11px,3.6vw,17px); line-height:1.1;
+  display:grid;place-items:center;text-align:center;padding:6px 5px;cursor:pointer;
+  box-shadow:0 2px 0 var(--card-edge), 0 6px 14px #00000038;
+  transition:transform .13s ease, box-shadow .13s ease, background .13s ease;
+  word-break:break-word;hyphens:auto;
+}
+.card span{display:block;max-width:100%}
+.card:active{transform:translateY(1px)}
+.card[aria-pressed="true"]{background:#2A3E57;color:var(--card);box-shadow:0 0 0 2px var(--brass), 0 6px 14px #00000038;transform:translateY(-2px)}
+.card.hub::before{
+  content:"";position:absolute;inset:-3px;border-radius:12px;padding:3px;
+  background:var(--ring,transparent);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  mask-composite:exclude;pointer-events:none;
+}
+.card.gone{animation:absorb .3s ease forwards}
+@keyframes absorb{to{opacity:0;transform:scale(.7)}}
+#raster.wrong{animation:shake .34s}
+@keyframes shake{10%,90%{transform:translateX(-3px)}30%,70%{transform:translateX(5px)}50%{transform:translateX(-5px)}}
+
+/* ---------- Bedienung ---------- */
+.controls{display:flex;gap:8px;justify-content:center;margin-bottom:10px;flex-wrap:wrap}
+.btn{font-family:var(--sans);font-size:13px;letter-spacing:.02em;padding:10px 15px;border-radius:9px;
+  border:1px solid var(--rule);background:#16294180;color:var(--card);cursor:pointer;min-height:42px}
+.btn:hover:not(:disabled){background:#1E3A5A}
+.btn:disabled{opacity:.38;cursor:default}
+.btn.primary{background:var(--brass);border-color:var(--brass);color:#1A1204;font-weight:600}
+.btn.primary:hover:not(:disabled){filter:brightness(1.07)}
+.msg{min-height:20px;text-align:center;font-size:13px;color:var(--brass);letter-spacing:.02em;margin-bottom:6px}
+
+/* ---------- Fußzeile ---------- */
+footer{margin-top:auto;padding-top:16px;text-align:center;font-size:11.5px;color:#7E93AA;line-height:1.7}
+.linkish{background:none;border:0;color:#9FB3C9;text-decoration:underline;cursor:pointer;font:inherit;padding:2px 4px}
+
+/* ---------- Überlagerung ---------- */
+.sheet{position:fixed;inset:0;background:#060D16D9;display:none;align-items:flex-end;justify-content:center;z-index:50;
+  padding:0;backdrop-filter:blur(3px)}
+.sheet.open{display:flex}
+.sheet .panel{background:var(--ground);border:1px solid var(--rule);border-bottom:0;
+  border-radius:16px 16px 0 0;width:100%;max-width:520px;max-height:88svh;overflow:auto;
+  padding:18px 18px calc(20px + env(safe-area-inset-bottom));animation:up .26s cubic-bezier(.2,.9,.3,1)}
+@keyframes up{from{transform:translateY(18px);opacity:0}to{transform:none;opacity:1}}
+.panel h2{font-family:var(--disp);font-weight:500;font-size:19px;letter-spacing:.09em;text-transform:uppercase;margin:0 0 4px}
+.panel h3{font-family:var(--disp);font-weight:500;font-size:13px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--brass);margin:18px 0 6px}
+.panel p,.panel li{font-size:13.5px;line-height:1.62;color:#C9D6E4}
+.panel ul{margin:6px 0;padding-left:18px}
+.panel{position:relative}
+.close{position:absolute;top:14px;right:14px;z-index:2}
+.panel h2{padding-right:44px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0 4px;text-align:center}
+.stats div b{display:block;font-family:var(--mono);font-size:22px;font-weight:600;color:var(--card)}
+.stats div span{font-size:10.5px;color:#93A7BC;letter-spacing:.04em}
+table.score{width:100%;border-collapse:collapse;margin-top:8px;font-size:13.5px}
+table.score td{padding:5px 0;border-bottom:1px solid #ffffff12;color:#C9D6E4}
+table.score td:last-child{text-align:right;font-family:var(--mono);white-space:nowrap}
+table.score tr.total td{border-bottom:0;border-top:1px solid var(--rule);font-weight:600;color:var(--card);padding-top:9px}
+table.score td.minus:last-child{color:#F08A7A}
+.emojigrid{font-size:22px;letter-spacing:3px;text-align:center;margin:10px 0 4px}
+.archiv{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.archiv button{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;
+  background:#16294180;border:1px solid var(--rule);border-radius:9px;padding:11px 13px;color:var(--card);
+  cursor:pointer;font:inherit;font-size:13.5px;text-align:left}
+.archiv button:hover{background:#1E3A5A}
+.archiv .done{color:var(--t2);font-family:var(--mono);font-size:12px}
+.archiv .open{color:#7E93AA;font-family:var(--mono);font-size:12px}
+.burst{position:fixed;pointer-events:none;font-size:26px;z-index:60;animation:fly .9s ease-out forwards}
+@keyframes fly{to{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(var(--rot)) scale(.5)}}
+.hint{font-size:12px;color:#93A7BC;margin-top:10px;font-style:italic}
+@media (prefers-reduced-motion:reduce){
+  *,*::before{animation-duration:.001s!important;transition-duration:.001s!important}
+}
+@media (max-width:360px){ .card{font-size:11px} .mark{font-size:22px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="mark">VIER<span class="x">×</span>DREI</div>
+    <div class="tools">
+      <button class="tool" id="btnHilfe" title="Anleitung" aria-label="Anleitung">?</button>
+      <button class="tool" id="btnPunkte" title="Punkte" aria-label="Punkte erklärt">§</button>
+      <button class="tool" id="btnStat" title="Statistik" aria-label="Statistik">▦</button>
+      <button class="tool" id="btnArchiv" title="Archiv" aria-label="Archiv">≡</button>
+    </div>
+  </header>
+
+  <p class="tagline">Vier Kategorien. Drei Wörter je Kategorie. <b>Ein Wort steht in allen vier.</b></p>
+
+  <div class="status">
+    <div class="left">
+      <span class="pill" id="nr">Nr. –</span>
+      <span class="pill" id="uhr">0:00</span>
+      <span class="pill" id="fehler"></span>
+    </div>
+    <div class="modes" role="group" aria-label="Schwierigkeit">
+      <button id="modeLeicht" aria-pressed="false">Leicht</button>
+      <button id="modeSchwer" aria-pressed="true">Schwer</button>
+    </div>
+  </div>
+
+  <div id="geloest"></div>
+  <div id="raster" role="group" aria-label="Wortkarten"></div>
+
+  <p class="msg" id="msg" role="status" aria-live="polite"></p>
+
+  <div class="controls">
+    <button class="btn" id="btnMischen">Mischen</button>
+    <button class="btn" id="btnLeeren" disabled>Auswahl leeren</button>
+    <button class="btn primary" id="btnPruefen" disabled>Prüfen</button>
+  </div>
+
+  <footer>
+    <button class="linkish" id="btnArchiv2">Archiv</button> ·
+    <button class="linkish" id="btnBauen">Rätsel bauen</button> ·
+    <button class="linkish" id="btnHilfe2">Anleitung</button>
+    <div style="margin-top:6px;opacity:.7">Nach dem Vorbild von <i>4×3</i> von Hank Green. Eigenständige deutsche Umsetzung.</div>
+  </footer>
+</div>
+
+<!-- ===================== Blätter ===================== -->
+<div class="sheet" id="sheet"><div class="panel" id="panel"></div></div>
+
+<script src="puzzles.js"></script>
+<script>
+"use strict";
+(function(){
+
+/* ---------------- Konstanten ---------------- */
+var TIER = [
+  {farbe:"#F2B705", schrift:"#0D1218", emoji:"🟨", name:"Stufe 1"},
+  {farbe:"#2F9E62", schrift:"#07130C", emoji:"🟩", name:"Stufe 2"},
+  // Blau und Lila sind zu dunkel für schwarze Schrift — helle Schrift hält
+  // den Kontrast über 4.5:1, damit die Stufe nicht nur an der Farbe hängt.
+  {farbe:"#2D74C4", schrift:"#FFFFFF", emoji:"🟦", name:"Stufe 3"},
+  {farbe:"#8558C4", schrift:"#FFFFFF", emoji:"🟪", name:"Stufe 4"}
+];
+var PUNKTE = {
+  loesung:100, schnell90:25, schnell180:10, lilaZuerst:25,
+  fehler:-15, fehlerSpaet:-30, nabelZuletzt:-100
+};
+var TAG0 = Date.UTC(2026,0,1)/86400000;
+var LS = {
+  hol:function(k,d){ try{ var v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } },
+  setz:function(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+};
+
+/* ---------------- Hilfsfunktionen ---------------- */
+function $(id){ return document.getElementById(id); }
+function heutigeNr(){
+  var d=new Date();
+  return Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/86400000) - TAG0 + 1;
+}
+function datumVonNr(nr){
+  var ms=(TAG0+nr-1)*86400000, d=new Date(ms);
+  return String(d.getUTCDate()).padStart(2,"0")+"."+String(d.getUTCMonth()+1).padStart(2,"0")+"."+d.getUTCFullYear();
+}
+function raetselVonNr(nr){
+  if(nr===0 && gastRaetsel) return gastRaetsel;
+  var p=window.VMD_PUZZLES;
+  return p[((nr-1)%p.length+p.length)%p.length];
+}
+/* Direktlink aus build.html: #p=<base64url(json)>. Nr. 0 = Gastrunde,
+ * zählt nicht in die Statistik und überschreibt das Tagesrätsel nicht. */
+var gastRaetsel=null;
+(function(){
+  var m=/^#p=(.+)$/.exec(location.hash||"");
+  if(!m) return;
+  try{
+    var s=m[1].replace(/-/g,"+").replace(/_/g,"/");
+    var r=JSON.parse(decodeURIComponent(escape(atob(s))));
+    if(r&&r.nabel&&r.gruppen&&r.gruppen.length===4) gastRaetsel=r;
+  }catch(e){}
+})();
+function alleWoerter(r){
+  var w=[r.nabel];
+  r.gruppen.forEach(function(g){ w=w.concat(g.woerter); });
+  return w;
+}
+function zeit(s){ return Math.floor(s/60)+":"+String(s%60).padStart(2,"0"); }
+function mische(a,seed){
+  var arr=a.slice(), s=seed||Math.floor(Math.random()*1e9);
+  function rnd(){ s=(s*1664525+1013904223)%4294967296; return s/4294967296; }
+  for(var i=arr.length-1;i>0;i--){ var j=Math.floor(rnd()*(i+1)); var t=arr[i]; arr[i]=arr[j]; arr[j]=t; }
+  return arr;
+}
+
+/* ---------------- Zustand ---------------- */
+var S = null;          // laufendes Spiel
+var opt = LS.hol("vmd.opt",{modus:"schwer"});
+
+function schluessel(nr){ return "vmd.spiel."+nr; }
+
+function neuesSpiel(nr){
+  var r=raetselVonNr(nr);
+  var gespeichert = nr===0 ? null : LS.hol(schluessel(nr),null);
+  if(gespeichert && gespeichert.reihenfolge){
+    S=gespeichert; S.raetsel=r; S.nr=nr;
+    if(!S.fertig) S.startMs=Date.now()-(S.sekunden||0)*1000;
+    return;
+  }
+  S={
+    nr:nr, raetsel:r,
+    reihenfolge:mische(alleWoerter(r), nr*7919),
+    geloest:[],            // Indizes der Gruppen in Lösungsreihenfolge
+    versuche:[],           // "t0".."t3" bei Treffer, "x" bei Fehler
+    fehler:0, sekunden:0, startMs:Date.now(),
+    nabelZuletztZaehler:0, fertig:false, punkte:null,
+    modus:opt.modus
+  };
+  sichere();
+}
+function sichere(){
+  if(!S || S.nr===0) return;   // Gastrunde aus einem Direktlink bleibt flüchtig
+  var kopie={};
+  for(var k in S) if(k!=="raetsel"&&k!=="startMs") kopie[k]=S[k];
+  LS.setz(schluessel(S.nr),kopie);
+}
+
+/* ---------------- Statistik ---------------- */
+function statsHol(){ return LS.hol("vmd.stats",{gespielt:0,serie:0,maxSerie:0,letzteNr:0,punkte:0}); }
+function statsSchreib(nr,punkte){
+  var st=statsHol();
+  if(nr===0) return st;                        // Direktlink zählt nicht
+  if(st.letzteNr===nr) return st;              // pro Rätsel nur einmal zählen
+  st.gespielt++;
+  st.serie = (st.letzteNr===nr-1)?st.serie+1:1;
+  if(st.serie>st.maxSerie) st.maxSerie=st.serie;
+  st.letzteNr=nr; st.punkte+=punkte;
+  LS.setz("vmd.stats",st); return st;
+}
+function serieJetzt(nr){
+  var st=statsHol();
+  if(nr===0) return 0;
+  if(st.letzteNr===nr) return st.serie;
+  if(st.letzteNr===nr-1) return st.serie+1;
+  return 1;
+}
+
+/* ---------------- Auswahl ---------------- */
+var sel=[];   // geordnete Wortliste
+
+function offeneGruppen(){
+  var o=[];
+  for(var i=0;i<4;i++) if(S.geloest.indexOf(i)<0) o.push(i);
+  return o;
+}
+function sichtbareWoerter(){
+  var weg={};
+  S.geloest.forEach(function(gi){ S.raetsel.gruppen[gi].woerter.forEach(function(w){ weg[w]=1; }); });
+  return S.reihenfolge.filter(function(w){ return !weg[w]; });
+}
+
+/* ---------------- Zeichnen ---------------- */
+function ringGradient(){
+  if(!S.geloest.length) return "transparent";
+  var teile=[], grad=0, i;
+  for(i=0;i<4;i++){
+    var farbe = i<S.geloest.length ? TIER[S.geloest[i]].farbe : "#D9A44133";
+    teile.push(farbe+" "+grad+"deg "+(grad+90)+"deg"); grad+=90;
+  }
+  return "conic-gradient(from -45deg,"+teile.join(",")+")";
+}
+
+function zeichne(){
+  // Kopf
+  $("nr").textContent = S.nr===0 ? "Direktlink" : "Nr. "+S.nr;
+  $("fehler").innerHTML = S.fehler ? "Fehler <b>"+S.fehler+"</b>" : "";
+  $("modeLeicht").setAttribute("aria-pressed", S.modus==="leicht");
+  $("modeSchwer").setAttribute("aria-pressed", S.modus==="schwer");
+
+  // gelöste Plaketten
+  var g=$("geloest"); g.innerHTML="";
+  S.geloest.forEach(function(gi){
+    var gr=S.raetsel.gruppen[gi], t=TIER[gi];
+    var el=document.createElement("div");
+    el.className="plaque"; el.style.background=t.farbe; el.style.color=t.schrift;
+    el.innerHTML='<div class="head"><span class="chip">'+(gi+1)+'</span><span class="titel"></span></div>'+
+                 '<div class="woerter"></div>';
+    el.querySelector(".titel").textContent=gr.titel;
+    el.querySelector(".woerter").textContent=[S.raetsel.nabel].concat(gr.woerter).join(" · ");
+    g.appendChild(el);
+  });
+
+  // Raster
+  var r=$("raster"); r.innerHTML="";
+  var zeigeNabel = S.modus==="leicht" || S.geloest.length>0 || S.fertig;
+  sichtbareWoerter().forEach(function(w){
+    var b=document.createElement("button");
+    b.className="card"+(w===S.raetsel.nabel&&zeigeNabel?" hub":"");
+    b.type="button";
+    b.setAttribute("aria-pressed", sel.indexOf(w)>=0);
+    b.innerHTML="<span></span>"; b.querySelector("span").textContent=w;
+    if(w===S.raetsel.nabel&&zeigeNabel) b.style.setProperty("--ring", ringGradient());
+    b.addEventListener("click",function(){ tippe(w,b); });
+    r.appendChild(b);
+  });
+
+  // Knöpfe
+  $("btnLeeren").disabled = sel.length===0 || S.fertig;
+  $("btnPruefen").disabled = sel.length!==3 || S.fertig;
+  $("btnMischen").disabled = S.fertig;
+  uhrZeichne();
+}
+
+function uhrZeichne(){
+  if(S.fertig){ $("uhr").textContent=zeit(S.sekunden); return; }
+  S.sekunden=Math.floor((Date.now()-S.startMs)/1000);
+  $("uhr").textContent=zeit(S.sekunden);
+}
+setInterval(function(){ if(S&&!S.fertig) uhrZeichne(); },1000);
+
+function sag(text){ $("msg").textContent=text||""; }
+
+/* ---------------- Spielzüge ---------------- */
+function tippe(w,el){
+  if(S.fertig) return;
+  var i=sel.indexOf(w);
+  if(i>=0) sel.splice(i,1);
+  else { if(sel.length===3) return; sel.push(w); }
+  el.setAttribute("aria-pressed", sel.indexOf(w)>=0);
+  $("btnLeeren").disabled=sel.length===0;
+  $("btnPruefen").disabled=sel.length!==3;
+  sag("");
+}
+
+function pruefe(){
+  if(sel.length!==3||S.fertig) return;
+  var nabel=S.raetsel.nabel;
+  var treffer=-1;
+  offeneGruppen().forEach(function(gi){
+    var soll=[nabel].concat(S.raetsel.gruppen[gi].woerter);
+    if(sel.every(function(w){ return soll.indexOf(w)>=0; })) treffer=gi;
+  });
+
+  if(treffer>=0){
+    if(sel[2]===nabel) S.nabelZuletztZaehler++;
+    S.versuche.push("t"+treffer);
+    S.geloest.push(treffer);
+    sel=[];
+    zeichne(); sichere();
+    if(S.geloest.length===3){ setTimeout(letzteAufloesen,420); }
+    else if(S.geloest.length===4){ setTimeout(gewonnen,420); }
+    else sag(S.raetsel.gruppen[treffer].titel);
+    return;
+  }
+
+  // Fehlversuch
+  S.versuche.push("x");
+  S.fehler++;
+  var r=$("raster"); r.classList.remove("wrong"); void r.offsetWidth; r.classList.add("wrong");
+  if(navigator.vibrate) navigator.vibrate(35);
+
+  var fast=false;
+  offeneGruppen().forEach(function(gi){
+    var soll=[nabel].concat(S.raetsel.gruppen[gi].woerter);
+    var n=sel.filter(function(w){ return soll.indexOf(w)>=0; }).length;
+    if(n===2) fast=true;
+  });
+  if(sel.indexOf(nabel)<0 && S.geloest.length>0) sag("Das Nabelwort fehlt in der Auswahl.");
+  else if(fast) sag("Fast — zwei davon gehören zusammen.");
+  else sag("Nicht diese drei.");
+  sichere(); zeichne();
+}
+
+function letzteAufloesen(){
+  var rest=offeneGruppen()[0];
+  S.versuche.push("t"+rest);
+  S.geloest.push(rest);
+  sel=[]; zeichne(); sichere();
+  setTimeout(gewonnen,420);
+}
+
+function gewonnen(){
+  S.fertig=true;
+  S.sekunden=Math.floor((Date.now()-S.startMs)/1000);
+  var p=rechnePunkte();
+  S.punkte=p.summe;
+  var st=statsSchreib(S.nr,p.summe);
+  sichere(); zeichne();
+  zeigeErgebnis(p,st);
+}
+
+function rechnePunkte(){
+  var zeilen=[], summe=0;
+  function add(text,wert,minus){ if(wert===0) return; zeilen.push({text:text,wert:wert,minus:!!minus}); summe+=wert; }
+  add("Rätsel gelöst", PUNKTE.loesung);
+  if(S.sekunden<90) add("Unter 90 Sekunden", PUNKTE.schnell90);
+  else if(S.sekunden<180) add("Unter 3 Minuten", PUNKTE.schnell180);
+  if(S.geloest[0]===3) add("Stufe 4 zuerst", PUNKTE.lilaZuerst);
+
+  // Fehler: die letzten beiden Kategorien wiegen schwerer
+  var offen=4, strafe=0, spaet=0;
+  S.versuche.forEach(function(v){
+    if(v[0]==="t"){ offen--; }
+    else { if(offen<=2){ strafe+=PUNKTE.fehlerSpaet; spaet++; } else { strafe+=PUNKTE.fehler; } }
+  });
+  var frueh=S.fehler-spaet;
+  if(frueh) add(frueh+"× Fehler", frueh*PUNKTE.fehler, true);
+  if(spaet) add(spaet+"× Fehler (nur noch 2 offen)", spaet*PUNKTE.fehlerSpaet, true);
+
+  if(S.nabelZuletztZaehler===4) add("Nabelwort immer zuletzt getippt", PUNKTE.nabelZuletzt, true);
+
+  var serie=serieJetzt(S.nr);
+  if(serie>0) add("Serie: "+serie+" Tage", serie);
+  if(S.modus==="leicht") { var ab=-Math.round(summe*0.25); add("Leicht-Modus (−25 %)", ab, true); }
+
+  if(summe<0) summe=0;
+  return {zeilen:zeilen, summe:summe, serie:serie};
+}
+
+/* ---------------- Blätter ---------------- */
+function oeffne(html){
+  $("panel").innerHTML='<button class="tool close" id="x">✕</button>'+html;
+  $("sheet").classList.add("open");
+  $("x").onclick=schliesse;
+}
+function schliesse(){ $("sheet").classList.remove("open"); }
+$("sheet").addEventListener("click",function(e){ if(e.target===$("sheet")) schliesse(); });
+document.addEventListener("keydown",function(e){ if(e.key==="Escape") schliesse(); });
+
+function emojiZeile(){
+  return S.versuche.map(function(v){ return v==="x"?"⬜":TIER[+v[1]].emoji; }).join("");
+}
+function teilenText(){
+  return "VIER×DREI "+(S.nr===0?"Direktlink":"Nr. "+S.nr)+" · "+(S.modus==="leicht"?"leicht":"schwer")+"\n"+
+         emojiZeile()+"\n"+
+         S.punkte+" Punkte · "+zeit(S.sekunden)+" · Serie "+serieJetzt(S.nr)+"\n"+
+         location.origin+location.pathname;
+}
+
+function zeigeErgebnis(p,st){
+  var rows=p.zeilen.map(function(z){
+    return '<tr><td class="'+(z.minus?"minus":"")+'">'+z.text+'</td><td class="'+(z.minus?"minus":"")+'">'+
+           (z.wert>0?"+":"")+z.wert+'</td></tr>';
+  }).join("");
+  oeffne(
+    '<h2>Gelöst</h2>'+
+    '<p>Das Nabelwort war <b>'+S.raetsel.nabel+'</b> — es steht in allen vier Kategorien.</p>'+
+    '<div class="emojigrid">'+emojiZeile()+'</div>'+
+    '<table class="score">'+rows+
+      '<tr class="total"><td>Punkte</td><td>'+p.summe+'</td></tr></table>'+
+    '<div class="stats">'+
+      '<div><b>'+st.gespielt+'</b><span>gelöst</span></div>'+
+      '<div><b>'+Math.round(st.punkte/Math.max(1,st.gespielt))+'</b><span>Ø Punkte</span></div>'+
+      '<div><b>'+st.serie+'</b><span>Serie</span></div>'+
+      '<div><b>'+st.maxSerie+'</b><span>beste Serie</span></div>'+
+    '</div>'+
+    '<div class="controls" style="margin-top:14px">'+
+      '<button class="btn primary" id="teilen">Ergebnis teilen</button>'+
+      '<button class="btn" id="bild">Als Bild</button>'+
+      '<button class="btn" id="zumArchiv">Archiv</button>'+
+    '</div>'+
+    '<p class="hint">Tipp: tippe im Raster auf <b>'+S.raetsel.nabel+'</b>.</p>'
+  );
+  $("teilen").onclick=function(){
+    var t=teilenText();
+    if(navigator.share) navigator.share({text:t}).catch(function(){});
+    else if(navigator.clipboard) navigator.clipboard.writeText(t).then(function(){ $("teilen").textContent="Kopiert"; });
+    else prompt("Kopieren:",t);
+  };
+  $("bild").onclick=teileBild;
+  $("zumArchiv").onclick=zeigeArchiv;
+}
+
+function teileBild(){
+  var c=document.createElement("canvas"), s=2; c.width=600*s; c.height=520*s;
+  var x=c.getContext("2d"); x.scale(s,s);
+  x.fillStyle="#12243B"; x.fillRect(0,0,600,520);
+  x.fillStyle="#D9A441"; x.font="600 34px Oswald, sans-serif";
+  x.fillText("VIER×DREI", 40, 62);
+  x.fillStyle="#9FB3C9"; x.font="16px 'IBM Plex Sans', sans-serif";
+  x.fillText("Nr. "+S.nr+" · "+datumVonNr(S.nr)+" · "+(S.modus==="leicht"?"leicht":"schwer"), 40, 90);
+  var y=140;
+  S.geloest.forEach(function(gi){
+    var g=S.raetsel.gruppen[gi];
+    x.fillStyle=TIER[gi].farbe; x.beginPath();
+    if(x.roundRect) x.roundRect(40,y-24,520,58,10); else x.rect(40,y-24,520,58);
+    x.fill();
+    x.fillStyle=TIER[gi].schrift; x.font="500 17px Oswald, sans-serif";
+    x.fillText(g.titel.toUpperCase(), 58, y);
+    x.font="14px 'IBM Plex Sans', sans-serif"; x.globalAlpha=.8;
+    x.fillText([S.raetsel.nabel].concat(g.woerter).join(" · "), 58, y+21);
+    x.globalAlpha=1; y+=72;
+  });
+  x.fillStyle="#F2EDE3"; x.font="600 22px 'IBM Plex Mono', monospace";
+  x.fillText(S.punkte+" Punkte", 40, 470);
+  x.fillStyle="#9FB3C9"; x.font="16px 'IBM Plex Sans', sans-serif";
+  x.fillText(zeit(S.sekunden)+" · "+S.fehler+" Fehler · Serie "+serieJetzt(S.nr), 40, 496);
+  c.toBlob(function(b){
+    var f=new File([b],"vierdrei-"+S.nr+".png",{type:"image/png"});
+    if(navigator.canShare&&navigator.canShare({files:[f]})) navigator.share({files:[f]}).catch(function(){});
+    else { var a=document.createElement("a"); a.href=URL.createObjectURL(b); a.download=f.name; a.click(); }
+  });
+}
+
+function zeigeHilfe(){
+  oeffne(
+    '<h2>So geht’s</h2>'+
+    '<p>Neun Wörter. Sie gehören zu vier Kategorien mit je drei Wörtern — und <b>ein Wort steht in allen vier</b>. Das ist das <b>Nabelwort</b>.</p>'+
+    '<ul>'+
+      '<li>Wähle drei Wörter und drücke <b>Prüfen</b>.</li>'+
+      '<li>Jede richtige Dreiergruppe enthält zwangsläufig das Nabelwort. Wenn du es kennst, brauchst du nur noch zwei.</li>'+
+      '<li>Gelöste Kategorien wandern nach oben, das Nabelwort bleibt im Raster.</li>'+
+      '<li>Die Farben zeigen die Schwierigkeit: <b>1</b> gelb am einfachsten, <b>4</b> lila am fiesesten. Sie sind kein Hinweis auf die Lösung.</li>'+
+      '<li>Der Ring um das Nabelwort füllt sich pro gelöster Kategorie um ein Viertel.</li>'+
+    '</ul>'+
+    '<h3>Leicht oder schwer</h3>'+
+    '<p><b>Leicht</b> markiert das Nabelwort von Anfang an — dafür gibt es 25 % weniger Punkte. <b>Schwer</b> verrät nichts.</p>'+
+    '<h3>Herkunft</h3>'+
+    '<p>Das Spielprinzip stammt von <i>4×3</i> von Hank Green. Dies hier ist eine eigenständige deutsche Umsetzung mit eigenen Rätseln und eigenem Code.</p>'
+  );
+}
+
+function zeigePunkteregeln(){
+  oeffne(
+    '<h2>Punkte</h2>'+
+    '<table class="score">'+
+      '<tr><td>Rätsel gelöst</td><td>+100</td></tr>'+
+      '<tr><td>Unter 90 Sekunden</td><td>+25</td></tr>'+
+      '<tr><td>Unter 3 Minuten</td><td>+10</td></tr>'+
+      '<tr><td>Stufe 4 (lila) zuerst</td><td>+25</td></tr>'+
+      '<tr><td>Serie</td><td>+1 je Tag</td></tr>'+
+      '<tr><td class="minus">Fehlversuch</td><td class="minus">−15</td></tr>'+
+      '<tr><td class="minus">Fehlversuch, wenn nur noch 2 Kategorien offen</td><td class="minus">−30</td></tr>'+
+      '<tr><td class="minus">Nabelwort in allen vier Gruppen zuletzt getippt</td><td class="minus">−100</td></tr>'+
+      '<tr><td class="minus">Leicht-Modus</td><td class="minus">−25 %</td></tr>'+
+    '</table>'+
+    '<p class="hint">Unter null geht es nicht. Die Tippreihenfolge zählt: wer das Nabelwort jedes Mal erst als drittes antippt, hat es offenbar nie gesucht.</p>'
+  );
+}
+
+function zeigeStatistik(){
+  var st=statsHol();
+  oeffne(
+    '<h2>Statistik</h2>'+
+    '<div class="stats">'+
+      '<div><b>'+st.gespielt+'</b><span>gelöst</span></div>'+
+      '<div><b>'+Math.round(st.punkte/Math.max(1,st.gespielt))+'</b><span>Ø Punkte</span></div>'+
+      '<div><b>'+st.serie+'</b><span>Serie</span></div>'+
+      '<div><b>'+st.maxSerie+'</b><span>beste Serie</span></div>'+
+    '</div>'+
+    '<p style="margin-top:14px">Punkte insgesamt: <b>'+st.punkte+'</b></p>'+
+    '<div class="controls" style="margin-top:10px"><button class="btn" id="reset">Statistik löschen</button></div>'
+  );
+  $("reset").onclick=function(){
+    if(!confirm("Statistik und alle gespeicherten Spielstände löschen?")) return;
+    try{ Object.keys(localStorage).filter(function(k){return k.indexOf("vmd.")===0;}).forEach(function(k){ localStorage.removeItem(k); }); }catch(e){}
+    location.reload();
+  };
+}
+
+function zeigeArchiv(){
+  var heute=heutigeNr(), items=[], i;
+  for(i=heute;i>Math.max(0,heute-30);i--){
+    var sp=LS.hol(schluessel(i),null);
+    items.push('<button data-nr="'+i+'"><span>Nr. '+i+' · '+datumVonNr(i)+'</span>'+
+      (sp&&sp.fertig?'<span class="done">'+sp.punkte+' P</span>':'<span class="open">offen</span>')+'</button>');
+  }
+  oeffne('<h2>Archiv</h2><p>Die letzten 30 Rätsel.</p><div class="archiv">'+items.join("")+'</div>');
+  Array.prototype.forEach.call($("panel").querySelectorAll(".archiv button"),function(b){
+    b.onclick=function(){
+      schliesse();
+      if(location.hash) history.replaceState(null,"",location.pathname);
+      gastRaetsel=null; starte(+b.dataset.nr);
+    };
+  });
+}
+
+/* ---------------- Nabelwort-Feuerwerk ---------------- */
+document.addEventListener("click",function(e){
+  var k=e.target.closest ? e.target.closest(".card.hub") : null;
+  if(!k||!S||!S.fertig) return;
+  var rect=k.getBoundingClientRect();
+  for(var i=0;i<12;i++){
+    var el=document.createElement("div");
+    el.className="burst"; el.textContent=S.raetsel.emoji||"✨";
+    el.style.left=(rect.left+rect.width/2)+"px"; el.style.top=(rect.top+rect.height/2)+"px";
+    el.style.setProperty("--dx",(Math.random()*260-130)+"px");
+    el.style.setProperty("--dy",(-Math.random()*220-40)+"px");
+    el.style.setProperty("--rot",(Math.random()*540-270)+"deg");
+    document.body.appendChild(el);
+    setTimeout(function(n){ return function(){ n.remove(); }; }(el),950);
+  }
+});
+
+/* ---------------- Bedienung ---------------- */
+$("btnPruefen").onclick=pruefe;
+$("btnLeeren").onclick=function(){ sel=[]; zeichne(); sag(""); };
+$("btnMischen").onclick=function(){
+  var sicht=sichtbareWoerter(), neu=mische(sicht);
+  var rest=S.reihenfolge.filter(function(w){ return sicht.indexOf(w)<0; });
+  S.reihenfolge=neu.concat(rest);
+  zeichne(); sichere();
+};
+function setzeModus(m){
+  if(S && S.geloest.length>0 && !S.fertig){ sag("Modus lässt sich nur vor dem ersten Treffer wechseln."); return; }
+  opt.modus=m; LS.setz("vmd.opt",opt);
+  if(S && !S.fertig){ S.modus=m; sichere(); }
+  zeichne();
+}
+$("modeLeicht").onclick=function(){ setzeModus("leicht"); };
+$("modeSchwer").onclick=function(){ setzeModus("schwer"); };
+$("btnHilfe").onclick=zeigeHilfe; $("btnHilfe2").onclick=zeigeHilfe;
+$("btnPunkte").onclick=zeigePunkteregeln;
+$("btnStat").onclick=zeigeStatistik;
+$("btnArchiv").onclick=zeigeArchiv; $("btnArchiv2").onclick=zeigeArchiv;
+$("btnBauen").onclick=function(){ location.href="build.html"; };
+
+/* ---------------- Start ---------------- */
+function starte(nr){
+  sel=[]; neuesSpiel(nr); zeichne(); sag("");
+  if(S.fertig) zeigeErgebnis(rechnePunkte(), statsHol());
+}
+starte(gastRaetsel ? 0 : heutigeNr());
+if(!LS.hol("vmd.gesehen",false)){ LS.setz("vmd.gesehen",true); zeigeHilfe(); }
+
+if("serviceWorker" in navigator){
+  window.addEventListener("load",function(){
+    navigator.serviceWorker.register("sw.js",{scope:"./",updateViaCache:"none"}).catch(function(){});
+  });
+}
+})();
+</script>
+</body>
+</html>
