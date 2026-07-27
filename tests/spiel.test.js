@@ -298,7 +298,7 @@ test("ein gelöstes Rätsel wird gespeichert und beim Neuladen wiederhergestellt
 
 test("Anleitung, Punkte, Statistik und Archiv lassen sich öffnen", async () => {
   const { window, doc } = await H.lade();
-  ["btnHilfe", "btnPunkte", "btnStat", "btnArchiv"].forEach((id) => {
+  ["btnHilfe", "btnPunkte", "btnStat", "btnArchiv2"].forEach((id) => {
     doc.getElementById(id).click();
     assert.ok(H.offen(doc), id + " öffnet nichts");
     assert.ok(doc.getElementById("panel").textContent.trim().length > 20, id + " ist leer");
@@ -309,7 +309,7 @@ test("Anleitung, Punkte, Statistik und Archiv lassen sich öffnen", async () => 
 
 test("das Archiv listet bis zu 30 Rätsel", async () => {
   const { window, doc } = await H.lade();
-  doc.getElementById("btnArchiv").click();
+  doc.getElementById("btnArchiv2").click();
   const heute = heutigesRaetsel(window).nr;
   assert.strictEqual(doc.querySelectorAll(".archiv button").length, Math.min(30, heute));
   window.close();
@@ -371,6 +371,149 @@ test("jedes Rätsel im Datensatz ist von Anfang bis Ende lösbar", async () => {
       g.forEach((w) => assert.ok(felder.includes(w), r.nabel + ": " + w + " fehlt im Raster"));
     }
   }
+});
+
+
+
+/* ---------------- Kinderwelt ---------------- */
+
+function heutigesKinderraetsel(window) {
+  const P = window.VMD_KINDER;
+  const d = new Date();
+  const nr = Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000)
+           - Date.UTC(2026, 0, 1) / 86400000 + 1;
+  return { nr, r: P[((nr - 1) % P.length + P.length) % P.length] };
+}
+
+test("ohne Wahl erscheint der Startbildschirm über dem Spiel", async () => {
+  const { window, doc } = await H.lade();
+  assert.ok(H.startOffen(doc), "Startbildschirm fehlt");
+  assert.strictEqual(doc.querySelectorAll("#start [data-welt]").length, 2);
+  window.close();
+});
+
+test("Kinderwelt zeigt sieben Karten und drei Kategorien", async () => {
+  const { window, doc } = await H.lade({ welt: "kinder" });
+  const { r } = heutigesKinderraetsel(window);
+  assert.ok(!H.startOffen(doc), "Startbildschirm bleibt offen");
+  assert.strictEqual(H.karten(doc).length, 7);
+  assert.strictEqual(r.gruppen.length, 3);
+  const soll = [r.nabel].concat(...r.gruppen.map((g) => g.woerter)).sort();
+  assert.deepStrictEqual(H.karten(doc).map(H.wortVon).sort(), soll);
+  window.close();
+});
+
+test("jede Kinderkarte trägt ein Bild", async () => {
+  const { window, doc } = await H.lade({ welt: "kinder" });
+  H.karten(doc).forEach((k) => {
+    const b = k.querySelector(".bild");
+    assert.ok(b && b.textContent.trim().length, H.wortVon(k) + " hat kein Bild");
+  });
+  window.close();
+});
+
+test("das Nabelwort ist für Kinder von Anfang an markiert", async () => {
+  const { window, doc } = await H.lade({ welt: "kinder" });
+  const { r } = heutigesKinderraetsel(window);
+  const hub = doc.querySelectorAll("#raster .card.hub");
+  assert.strictEqual(hub.length, 1, "nicht markiert");
+  assert.strictEqual(H.wortVon(hub[0]), r.nabel);
+  window.close();
+});
+
+test("Kinder spielen ohne Uhr, ohne Fehlerzähler und ohne Schwierigkeitswahl", async () => {
+  const { window, doc } = await H.lade({ welt: "kinder" });
+  const { r } = heutigesKinderraetsel(window);
+  assert.strictEqual(doc.getElementById("uhr").style.display, "none");
+  assert.strictEqual(doc.getElementById("modeLeicht").parentNode.style.display, "none");
+  H.waehle(doc, [r.nabel, r.gruppen[0].woerter[0], r.gruppen[1].woerter[0]]);
+  H.pruefe(doc);
+  await H.neuerTick(window, 30);
+  assert.strictEqual(doc.getElementById("fehler").textContent.trim(), "", "Fehler werden gezählt");
+  window.close();
+});
+
+test("zwei gelöste Kindergruppen lösen die dritte automatisch auf", async () => {
+  const { window, doc } = await H.lade({ welt: "kinder" });
+  const { r } = heutigesKinderraetsel(window);
+  for (let i = 0; i < 2; i++) {
+    H.waehle(doc, [r.nabel].concat(r.gruppen[i].woerter));
+    H.pruefe(doc);
+    await H.neuerTick(window, 30);
+  }
+  await H.neuerTick(window, 1000);
+  assert.strictEqual(H.plaketten(doc).length, 3, "dritte Gruppe nicht aufgelöst");
+  assert.ok(H.offen(doc), "kein Ergebnis");
+  const txt = doc.getElementById("panel").textContent;
+  assert.ok(/Geschafft/.test(txt), "kein Kinder-Ergebnis: " + txt.slice(0, 60));
+  assert.ok(!/Punkte/.test(txt), "Punkte im Kinder-Ergebnis");
+  window.close();
+});
+
+test("Kinder- und Erwachsenenstand liegen getrennt", async () => {
+  // Sonst überschreibt das Kind den Tagesstand des Erwachsenen und umgekehrt.
+  const url = "https://welten.test/vierdrei/";
+  const a = await H.lade({ url, welt: "kinder" });
+  const { r, nr } = heutigesKinderraetsel(a.window);
+  H.waehle(a.doc, [r.nabel].concat(r.gruppen[0].woerter));
+  H.pruefe(a.doc);
+  await H.neuerTick(a.window, 30);
+  assert.ok(a.window.localStorage.getItem("vmd.kinder.spiel." + nr), "Kinderstand fehlt");
+  assert.strictEqual(a.window.localStorage.getItem("vmd.spiel." + nr), null,
+    "Kinderstand landete im Erwachsenenfach");
+  assert.strictEqual(a.window.localStorage.getItem("vmd.stats"), null,
+    "Kinderpartie zählte in der Erwachsenenstatistik");
+  a.window.close();
+});
+
+test("die getroffene Wahl wird gespeichert", async () => {
+  const { window } = await H.lade({ welt: "kinder" });
+  assert.strictEqual(window.localStorage.getItem("vmd.welt"), '"kinder"');
+  window.close();
+});
+
+test("eine gemerkte Welt startet ohne Startbildschirm", async () => {
+  const { window, doc } = await H.lade({ speicher: { "vmd.welt": "kinder" } });
+  assert.ok(!H.startOffen(doc), "Startbildschirm trotz gemerkter Welt");
+  assert.ok(doc.body.classList.contains("kinder"), "falsche Welt");
+  assert.strictEqual(H.karten(doc).length, 7);
+  window.close();
+});
+
+test("der Weltwechsler öffnet den Startbildschirm wieder", async () => {
+  const { window, doc } = await H.lade({ welt: "erwachsen" });
+  doc.getElementById("btnWelt").click();
+  assert.ok(H.startOffen(doc));
+  doc.querySelector('#start [data-welt="kinder"]').click();
+  await H.neuerTick(window, 20);
+  assert.strictEqual(H.karten(doc).length, 7);
+  window.close();
+});
+
+test("die Anleitung passt sich der Welt an", async () => {
+  const k = await H.lade({ welt: "kinder" });
+  k.doc.getElementById("btnHilfe").click();
+  assert.ok(/goldenen Rand/.test(k.doc.getElementById("panel").textContent));
+  k.window.close();
+  const e = await H.lade({ welt: "erwachsen" });
+  e.doc.getElementById("btnHilfe").click();
+  assert.ok(/Nabelwort/.test(e.doc.getElementById("panel").textContent));
+  e.window.close();
+});
+
+test("jedes Kinderrätsel ist vollständig und lösbar", async () => {
+  const { window } = await H.lade({ welt: "kinder" });
+  const P = window.VMD_KINDER;
+  window.close();
+  P.forEach((r) => {
+    const felder = [r.nabel].concat(...r.gruppen.map((g) => g.woerter));
+    assert.strictEqual(new Set(felder).size, 7, r.nabel);
+    r.gruppen.forEach((g, i) => {
+      const drei = [r.nabel].concat(g.woerter);
+      assert.strictEqual(new Set(drei).size, 3, r.nabel + " Gruppe " + (i + 1));
+      drei.forEach((w) => assert.ok(felder.includes(w), r.nabel + ": " + w + " fehlt"));
+    });
+  });
 });
 
 module.exports = t;

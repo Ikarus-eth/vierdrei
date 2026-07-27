@@ -80,4 +80,74 @@ test("ß wird beim Tippen zu SS normalisiert", async () => {
     w.document.getElementById("ausgabe").value);
   w.close();
 });
+
+
+const KIND = {
+  nabel: "BALL", emoji: "🎉",
+  gruppen: [
+    { titel: "Spielzeug", woerter: ["PUPPE", "TEDDY"] },
+    { titel: "Ist rund", woerter: ["RAD", "MOND"] },
+    { titel: "Beim Fußball", woerter: ["TOR", "SCHUH"] }
+  ],
+  bilder: { BALL: "⚽", PUPPE: "🪆", TEDDY: "🧸", RAD: "🛞", MOND: "🌕", TOR: "🥅", SCHUH: "👟" }
+};
+function fuelleKind(doc, r) {
+  const setz = (id, v) => {
+    const el = doc.getElementById(id);
+    el.value = v;
+    el.dispatchEvent(new doc.defaultView.Event("input", { bubbles: true }));
+  };
+  setz("nabel", r.nabel); setz("bnabel", r.bilder[r.nabel]);
+  setz("emoji", r.emoji); setz("autor", "Test");
+  r.gruppen.forEach((g, i) => {
+    setz("t" + i, g.titel);
+    setz("a" + i, g.woerter[0]); setz("ea" + i, r.bilder[g.woerter[0]]);
+    setz("b" + i, g.woerter[1]); setz("eb" + i, r.bilder[g.woerter[1]]);
+  });
+}
+
+test("Kinderwelt zeigt drei Kategorien und Bildfelder", async () => {
+  const w = await lade();
+  w.document.getElementById("wKinder").click();
+  assert.strictEqual(w.document.querySelectorAll("fieldset").length, 3);
+  assert.ok(!w.document.getElementById("nabelBildFeld").hidden, "kein Bildfeld fürs Nabelwort");
+  assert.ok(w.document.getElementById("ea0"), "kein Bildfeld für das erste Wort");
+  assert.strictEqual(w.document.querySelectorAll("#vorschau .pv").length, 7);
+  w.close();
+});
+
+test("Kinderrätsel ohne Bild wird abgelehnt", async () => {
+  // Ein Kinderrätzel ohne Bilder ist für die Zielgruppe unbrauchbar.
+  const w = await lade();
+  w.document.getElementById("wKinder").click();
+  const ohne = JSON.parse(JSON.stringify(KIND));
+  ohne.bilder.RAD = "";
+  fuelleKind(w.document, ohne);
+  assert.ok(w.document.getElementById("kopieren").disabled, "durchgewunken");
+  assert.ok(/kein Bild/.test(w.document.getElementById("pruef").textContent));
+  w.close();
+});
+
+test("vollständiges Kinderrätsel gibt Code mit Bildern aus", async () => {
+  const w = await lade();
+  w.document.getElementById("wKinder").click();
+  fuelleKind(w.document, KIND);
+  assert.ok(!w.document.getElementById("kopieren").disabled, w.document.getElementById("pruef").textContent);
+  const code = w.document.getElementById("ausgabe").value;
+  assert.ok(/bilder: \{/.test(code), "keine Bilder im Code");
+  assert.ok(code.includes('"BALL": "⚽"'), code);
+  assert.strictEqual((code.match(/titel:/g) || []).length, 3, "falsche Zahl an Kategorien");
+  w.close();
+});
+
+test("der Weltwechsel im Baukasten räumt die vierte Kategorie ab", async () => {
+  const w = await lade();
+  fuelle(w.document, GUT);
+  w.document.getElementById("wKinder").click();
+  assert.strictEqual(w.document.querySelectorAll("fieldset").length, 3);
+  w.document.getElementById("wErwachsen").click();
+  assert.strictEqual(w.document.querySelectorAll("fieldset").length, 4);
+  w.close();
+});
+
 module.exports = t;

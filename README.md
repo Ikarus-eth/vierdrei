@@ -3,6 +3,20 @@
 Tägliches deutsches Worträtsel. Neun Wörter, vier Kategorien zu je drei Wörtern,
 **ein Wort steht in allen vier** — das Nabelwort.
 
+Zwei Welten, eine Maschine:
+
+| | Erwachsene | Kinder |
+|---|---|---|
+| Karten | 9 | 7 |
+| Kategorien | 4 | 3 |
+| Bilder auf den Karten | nein | ja |
+| Nabelwort markiert | ab Kategorie 2 | von Anfang an |
+| Uhr, Punkte, Fehlerzähler | ja | nein |
+| Vorlesen beim Antippen | nein | ja (abschaltbar) |
+
+Die Wahl steht auf dem Startbildschirm und wird gemerkt; das 🧒/🧑-Symbol oben
+rechts holt sie zurück.
+
 Spielprinzip nach **4×3 von Hank Green** (`hankgreen.com/fourbythree`).
 Eigener Code, eigene Rätsel, deutsche Oberfläche.
 
@@ -14,7 +28,8 @@ zur Laufzeit. Lässt sich auf dem iPad zum Homescreen hinzufügen (PWA).
 | Datei | was |
 |---|---|
 | `index.html` | das ganze Spiel — HTML, CSS, JS in einer Datei. **Hier wird editiert.** |
-| `puzzles.js` | die Rätsel. Setzt `window.VMD_PUZZLES`. Einzige Datei, die für neue Rätsel angefasst wird. |
+| `puzzles.js` | Rätsel für Erwachsene. Setzt `window.VMD_PUZZLES`. |
+| `puzzles-kinder.js` | Rätsel für Kinder. Setzt `window.VMD_KINDER`, zusätzlich `bilder` je Rätsel. |
 | `build.html` | Baukasten für neue Rätsel: prüft live, gibt Code und Direktlink aus |
 | `sw.js` | Service Worker, Netz zuerst, `cache:"no-store"` |
 | `manifest.json`, `icon-*.png` | PWA-Metadaten und Symbole |
@@ -25,7 +40,7 @@ zur Laufzeit. Lässt sich auf dem iPad zum Homescreen hinzufügen (PWA).
 ## Befehle
 
 ```bash
-./tests/run.sh          # 43 Tests: Rätseldaten, Spiellogik, Baukasten
+./tests/run.sh          # 60 Tests: Rätseldaten, Spiellogik, Baukasten
 python3 -m http.server  # lokal ansehen unter http://localhost:8000
 ```
 
@@ -58,8 +73,10 @@ python3 -m http.server  # lokal ansehen unter http://localhost:8000
 
 ## Rätsel anlegen
 
-`build.html` öffnen, ausfüllen, „Code kopieren“, ans Ende der Liste in
-`puzzles.js` hängen, `id` hochzählen, `./tests/run.sh`.
+`build.html` öffnen, oben die Welt wählen, ausfüllen, „Code kopieren“, ans Ende
+der Liste in `puzzles.js` bzw. `puzzles-kinder.js` hängen, `id` hochzählen,
+`./tests/run.sh`. Im Kindermodus schaltet der Baukasten auf drei Kategorien um
+und verlangt zu jedem Wort ein Bild.
 
 „Direktlink kopieren“ packt das Rätsel base64-kodiert in den URL-Hash
 (`index.html#p=…`). So lässt sich ein Rätsel weitergeben, ohne es zu deployen.
@@ -67,8 +84,9 @@ Direktlink-Runden zählen nicht in die Statistik und überschreiben den
 Tagesstand nicht.
 
 Das Tagesrätsel ergibt sich aus dem Datum: `Rätsel[(Nr − 1) mod Anzahl]`,
-Nr. 1 = 01.01.2026. Die Liste wiederholt sich also, wenn sie durch ist —
-aktuell nach 21 Tagen. Nachlegen, bevor es so weit ist.
+Nr. 1 = 01.01.2026. Jede Welt zählt durch ihre eigene Liste; beide wiederholen
+sich, wenn sie durch sind — aktuell nach 21 Tagen (Erwachsene) und 14 Tagen
+(Kinder). Nachlegen, bevor es so weit ist.
 
 ## Fallstricke — nicht rückgängig machen
 
@@ -89,6 +107,19 @@ aktuell nach 21 Tagen. Nachlegen, bevor es so weit ist.
 - **Gastrunden aus Direktlinks werden nicht gespeichert.** Sie liefen sonst unter
   demselben Speicherschlüssel und ein geteiltes Rätsel würde den Tagesstand
   überschreiben.
+- **Kinder haben keine Uhr, keine Punkte und keinen Fehlerzähler.** Fehlversuche
+  kosten dort nichts. Einem Sechsjährigen, dem beim Nachdenken eine Uhr zusieht,
+  hilft das nicht.
+- **Jede Kinderkarte braucht ein Bild.** Das ist der Grund, warum die Kinderwelt
+  überhaupt funktioniert, wenn das Lesen noch hakt. Der Datentest weist ein
+  Rätsel ohne vollständige `bilder` ab.
+- **Beide Welten speichern getrennt** (`vmd.` bzw. `vmd.kinder.`). Sonst
+  überschreibt das Kind den Tagesstand des Erwachsenen und die Serien mischen
+  sich.
+- **Ein frisch erzeugtes Spiel wird nicht gespeichert**, erst der erste Zug. Sonst
+  schreibt schon das Booten in die Welt, die man gar nicht spielt. Die
+  Kartenreihenfolge ist aus der Rätselnummer abgeleitet und entsteht identisch
+  neu.
 - **Die Statistik zeigt keine Gewinnquote.** Es gibt keine Niederlage — Fehler
   kosten Punkte, beenden aber nichts. Eine Quote wäre immer 100 %. Stattdessen
   Ø Punkte.

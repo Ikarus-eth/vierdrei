@@ -2,8 +2,8 @@
  * cache:"no-store" erzwingt einen echten Netzabruf statt einer stillen
  * HTTP-Cache-Kopie — ohne das liefert iOS nach einem Deploy tagelang die
  * alte App aus. Registrierung nutzt zusätzlich updateViaCache:"none". */
-const CACHE = "vierdrei-v1";
-const ASSETS = ["./", "./index.html", "./puzzles.js", "./build.html", "./manifest.json", "./icon-180.png", "./icon-512.png"];
+const CACHE = "vierdrei-v2";
+const ASSETS = ["./", "./index.html", "./puzzles.js", "./puzzles-kinder.js", "./build.html", "./manifest.json", "./icon-180.png", "./icon-512.png"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).catch(() => {}));

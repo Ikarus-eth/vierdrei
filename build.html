@@ -18,6 +18,8 @@
 body{margin:0;background:var(--ground);background-image:radial-gradient(120% 80% at 50% -10%,#1B3555 0%,var(--ground) 55%,var(--ground-2) 100%);
   background-attachment:fixed;color:var(--card);font-family:var(--sans);
   padding:max(12px,env(safe-area-inset-top)) 12px max(24px,env(safe-area-inset-bottom));display:flex;justify-content:center}
+body.kinder{--ground:#173A52;--ground-2:#0D2637;--rule:#2C5570;--brass:#FFC93C;
+  background-image:radial-gradient(120% 80% at 50% -10%,#22536F 0%,var(--ground) 55%,var(--ground-2) 100%)}
 .wrap{width:100%;max-width:520px}
 header{display:flex;align-items:center;justify-content:space-between;padding-bottom:8px}
 .mark{font-family:var(--disp);font-weight:600;font-size:22px;letter-spacing:.1em}
@@ -25,25 +27,32 @@ header{display:flex;align-items:center;justify-content:space-between;padding-bot
 a.back{color:#9FB3C9;font-size:13px;text-decoration:none;border:1px solid var(--rule);border-radius:8px;padding:7px 11px}
 a.back:hover{background:#1E3A5A}
 h1{font-family:var(--disp);font-weight:500;font-size:19px;letter-spacing:.09em;text-transform:uppercase;margin:14px 0 4px}
-p.lead{font-size:13.5px;color:#9FB3C9;line-height:1.6;margin:0 0 16px}
+p.lead{font-size:13.5px;color:#9FB3C9;line-height:1.6;margin:0 0 14px}
 label{display:block;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#93A7BC;margin:0 0 4px}
 input{width:100%;background:#0E1E33;border:1px solid var(--rule);border-radius:8px;color:var(--card);
   font-family:var(--sans);font-size:15px;padding:10px 11px;min-height:42px}
+body.kinder input{background:#0F2C40}
 input:focus{outline:2px solid var(--brass);outline-offset:1px}
+input.bild{text-align:center;font-size:20px}
 .row{display:flex;gap:8px}
 .row>div{flex:1;min-width:0}
+.welt{display:flex;border:1px solid var(--rule);border-radius:9px;overflow:hidden;margin-bottom:14px}
+.welt button{flex:1;font-family:var(--sans);font-size:13px;letter-spacing:.04em;background:transparent;color:#9FB3C9;
+  border:0;padding:11px 8px;cursor:pointer;min-height:44px}
+.welt button[aria-pressed="true"]{background:var(--brass);color:#1A1204;font-weight:600}
 fieldset{border:1px solid var(--rule);border-left-width:4px;border-radius:10px;margin:12px 0;padding:12px}
-fieldset:nth-of-type(1){border-left-color:var(--t1)} fieldset:nth-of-type(2){border-left-color:var(--t2)}
-fieldset:nth-of-type(3){border-left-color:var(--t3)} fieldset:nth-of-type(4){border-left-color:var(--t4)}
 legend{font-family:var(--disp);font-size:12px;letter-spacing:.1em;text-transform:uppercase;padding:0 6px;color:#C9D6E4}
 .field{margin-bottom:10px}
 #vorschau{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:6px 0 14px}
 .pv{flex:0 0 calc((100% - 16px)/3);aspect-ratio:1/.72;min-height:60px;border-radius:9px;background:var(--card);color:var(--ink);
-  font-family:var(--disp);font-weight:500;font-size:clamp(10px,3.2vw,15px);display:grid;place-items:center;text-align:center;
-  padding:5px;box-shadow:0 2px 0 var(--card-edge);word-break:break-word}
+  font-family:var(--disp);font-weight:500;font-size:clamp(10px,3.2vw,15px);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;padding:5px;box-shadow:0 2px 0 var(--card-edge);word-break:break-word}
+body.kinder .pv{aspect-ratio:1/.94}
+.pv .b{font-size:clamp(20px,7vw,30px);line-height:1.15}
 .pv.leer{background:#0E1E33;color:#40587A;box-shadow:inset 0 0 0 1px var(--rule)}
 .pv.nabel{box-shadow:0 0 0 3px var(--brass),0 2px 0 var(--card-edge)}
 #pruef{font-size:13px;line-height:1.7;margin:0 0 14px;padding:11px 13px;border-radius:9px;border:1px solid var(--rule);background:#0E1E33}
+body.kinder #pruef{background:#0F2C40}
 #pruef .ok{color:#6FD39B} #pruef .no{color:#F08A7A}
 .btn{font-family:var(--sans);font-size:13.5px;padding:11px 15px;border-radius:9px;border:1px solid var(--rule);
   background:#16294180;color:var(--card);cursor:pointer;min-height:44px}
@@ -64,11 +73,18 @@ textarea{width:100%;min-height:190px;background:#0B1726;border:1px solid var(--r
   </header>
 
   <h1>Rätsel bauen</h1>
-  <p class="lead">Wähle zuerst das <b>Nabelwort</b> — das Wort, das in alle vier Kategorien passt. Dann je zwei weitere Wörter pro Kategorie. Jedes dieser Wörter darf <b>nur</b> in seine eigene Kategorie passen, sonst hat das Rätsel mehr als eine Lösung.</p>
+
+  <div class="welt" role="group" aria-label="Für wen">
+    <button id="wErwachsen" aria-pressed="true">🧑 Erwachsene · 4 Kategorien</button>
+    <button id="wKinder" aria-pressed="false">🧒 Kinder · 3 Kategorien</button>
+  </div>
+
+  <p class="lead" id="lead"></p>
 
   <div class="row">
     <div class="field" style="flex:2"><label for="nabel">Nabelwort</label><input id="nabel" placeholder="BANK" autocomplete="off"></div>
-    <div class="field" style="flex:1"><label for="emoji">Emoji</label><input id="emoji" placeholder="🏦" autocomplete="off"></div>
+    <div class="field" id="nabelBildFeld" hidden><label for="bnabel">Bild</label><input class="bild" id="bnabel" autocomplete="off"></div>
+    <div class="field" style="flex:1"><label for="emoji">Jubel-Emoji</label><input class="bild" id="emoji" placeholder="🎉" autocomplete="off"></div>
   </div>
   <div class="field"><label for="autor">Dein Name</label><input id="autor" placeholder="Ikarus" autocomplete="off"></div>
 
@@ -85,68 +101,133 @@ textarea{width:100%;min-height:190px;background:#0B1726;border:1px solid var(--r
   </div>
 
   <textarea id="ausgabe" readonly spellcheck="false"></textarea>
-  <p class="hint">Der Code kommt ans Ende der Liste in <b>puzzles.js</b> — die <code>id</code> ist schon hochgezählt. Danach <code>tests/run.sh</code> laufen lassen; die Datenprüfung dort fängt dieselben Fehler wie die Vorschau oben.</p>
+  <p class="hint" id="ziel"></p>
 </div>
 
 <script>
 "use strict";
-var STUFEN = ["Stufe 1 — am leichtesten", "Stufe 2", "Stufe 3", "Stufe 4 — am fiesesten"];
-var G = document.getElementById("gruppen");
-STUFEN.forEach(function (s, i) {
-  var fs = document.createElement("fieldset");
-  fs.innerHTML =
-    '<legend>' + s + '</legend>' +
-    '<div class="field"><label for="t' + i + '">Kategorie</label><input id="t' + i + '" placeholder="Zum Sitzen" autocomplete="off"></div>' +
-    '<div class="row"><div class="field"><label for="a' + i + '">Wort</label><input id="a' + i + '" autocomplete="off"></div>' +
-    '<div class="field"><label for="b' + i + '">Wort</label><input id="b' + i + '" autocomplete="off"></div></div>';
-  G.appendChild(fs);
-});
+var FARBEN = ["var(--t1)", "var(--t2)", "var(--t3)", "var(--t4)"];
+var welt = "erwachsen";
 
 function $(id) { return document.getElementById(id); }
+function kind() { return welt === "kinder"; }
+function anzahl() { return kind() ? 3 : 4; }
 function norm(s) { return (s || "").trim().toUpperCase().replace(/ß/g, "SS"); }
+function roh(id) { var e = $(id); return e && e.value ? e.value.trim() : ""; }
+
+/* Für Kinder ist die dritte Stufe schon die schwerste — die Beschriftung darf
+ * nicht von einer vierten reden, die es nicht gibt. */
+function stufenname(i) {
+  return kind()
+    ? ["Stufe 1 — am leichtesten", "Stufe 2", "Stufe 3 — am schwersten"][i]
+    : ["Stufe 1 — am leichtesten", "Stufe 2", "Stufe 3", "Stufe 4 — am fiesesten"][i];
+}
+
+function wortZeile(i, s) {
+  var w = '<div class="field" style="flex:2"><label for="' + s + i + '">Wort</label>' +
+          '<input id="' + s + i + '" autocomplete="off"></div>';
+  var b = kind()
+    ? '<div class="field" style="flex:1"><label for="e' + s + i + '">Bild</label>' +
+      '<input class="bild" id="e' + s + i + '" autocomplete="off"></div>'
+    : "";
+  return '<div class="row">' + w + b + '</div>';
+}
+
+function baueFelder() {
+  var G = $("gruppen");
+  G.innerHTML = "";
+  for (var i = 0; i < anzahl(); i++) {
+    var fs = document.createElement("fieldset");
+    fs.style.borderLeftColor = FARBEN[i];
+    fs.innerHTML =
+      '<legend>' + stufenname(i) + '</legend>' +
+      '<div class="field"><label for="t' + i + '">Kategorie</label>' +
+      '<input id="t' + i + '" placeholder="' + (kind() ? "Ist rund" : "Zum Sitzen") + '" autocomplete="off"></div>' +
+      wortZeile(i, "a") + wortZeile(i, "b");
+    G.appendChild(fs);
+  }
+  $("nabelBildFeld").hidden = !kind();
+  $("wErwachsen").setAttribute("aria-pressed", !kind());
+  $("wKinder").setAttribute("aria-pressed", kind());
+  document.body.classList.toggle("kinder", kind());
+  $("lead").innerHTML = kind()
+    ? "Wähle zuerst das <b>Nabelwort</b> — es passt in alle drei Gruppen. Dann je zwei weitere Wörter. Jedes Wort braucht ein <b>Bild</b>, sonst kommt ein Kind, das noch nicht sicher liest, nicht weiter."
+    : "Wähle zuerst das <b>Nabelwort</b> — es passt in alle vier Kategorien. Dann je zwei weitere Wörter pro Kategorie. Jedes dieser Wörter darf <b>nur</b> in seine eigene Kategorie passen, sonst hat das Rätsel mehr als eine Lösung.";
+  $("ziel").innerHTML = kind()
+    ? "Der Code kommt ans Ende der Liste in <b>puzzles-kinder.js</b>, die <code>id</code> wird hochgezählt. Danach <code>tests/run.sh</code>."
+    : "Der Code kommt ans Ende der Liste in <b>puzzles.js</b>, die <code>id</code> wird hochgezählt. Danach <code>tests/run.sh</code>.";
+}
 
 function lies() {
-  var r = { id: null, nabel: norm($("nabel").value), emoji: ($("emoji").value || "").trim(),
-            autor: ($("autor").value || "").trim(), gruppen: [] };
-  for (var i = 0; i < 4; i++) {
-    r.gruppen.push({ titel: ($("t" + i).value || "").trim(), woerter: [norm($("a" + i).value), norm($("b" + i).value)] });
+  var r = { nabel: norm(roh("nabel")), emoji: roh("emoji"), autor: roh("autor"), gruppen: [] };
+  var i, j;
+  for (i = 0; i < anzahl(); i++) {
+    r.gruppen.push({ titel: roh("t" + i), woerter: [norm(roh("a" + i)), norm(roh("b" + i))] });
+  }
+  if (kind()) {
+    r.bilder = {};
+    if (r.nabel) r.bilder[r.nabel] = roh("bnabel");
+    for (j = 0; j < anzahl(); j++) {
+      ["a", "b"].forEach(function (s) {
+        var w = norm(roh(s + j));
+        if (w) r.bilder[w] = roh("e" + s + j);
+      });
+    }
   }
   return r;
+}
+
+function alleWoerter(r) {
+  var a = [r.nabel];
+  r.gruppen.forEach(function (g) { a = a.concat(g.woerter); });
+  return a;
 }
 
 /* Dieselben Regeln wie tests/daten.test.js — hier nur früher sichtbar. */
 function pruefe(r) {
   var f = [];
   if (!r.nabel) f.push("Nabelwort fehlt.");
-  if (!r.emoji) f.push("Emoji fehlt (fürs Feuerwerk am Ende).");
-  var alle = [r.nabel].concat(r.gruppen[0].woerter, r.gruppen[1].woerter, r.gruppen[2].woerter, r.gruppen[3].woerter);
+  if (!r.emoji) f.push("Jubel-Emoji fehlt (springt am Ende aus der Karte).");
+
+  var alle = alleWoerter(r);
   var leer = alle.filter(function (w) { return !w; }).length;
   if (leer) f.push(leer + " Wortfeld" + (leer > 1 ? "er sind" : " ist") + " noch leer.");
   r.gruppen.forEach(function (g, i) { if (!g.titel) f.push("Kategorie " + (i + 1) + " hat keinen Titel."); });
-  var gefuellt = alle.filter(Boolean);
-  var doppelt = gefuellt.filter(function (w, i) { return gefuellt.indexOf(w) !== i; });
-  [].concat(doppelt).forEach(function (w) { f.push("„" + w + "“ steht mehrfach im Rätsel — nur das Nabelwort darf das."); });
+
+  var gefuellt = alle.filter(Boolean), gesehen = {};
+  gefuellt.forEach(function (w) {
+    if (gesehen[w]) f.push("„" + w + "“ steht mehrfach im Rätsel — nur das Nabelwort darf das.");
+    gesehen[w] = 1;
+  });
   gefuellt.forEach(function (w) {
     if (w.length > 13) f.push("„" + w + "“ ist zu lang für eine Karte (max. 13 Zeichen).");
     if (/\s/.test(w)) f.push("„" + w + "“ enthält ein Leerzeichen.");
+    if (kind() && !(r.bilder && r.bilder[w])) f.push("„" + w + "“ hat noch kein Bild.");
   });
-  r.gruppen.forEach(function (g) { if (g.titel.length > 34) f.push("Titel „" + g.titel + "“ passt nicht auf die Plakette."); });
+  r.gruppen.forEach(function (g) {
+    if (g.titel.length > 34) f.push("Titel „" + g.titel + "“ passt nicht auf die Plakette.");
+  });
   return f;
 }
 
 function zeichne() {
-  var r = lies(), fehler = pruefe(r);
-  var felder = [r.nabel].concat(r.gruppen[0].woerter, r.gruppen[1].woerter, r.gruppen[2].woerter, r.gruppen[3].woerter);
+  var r = lies(), fehler = pruefe(r), felder = alleWoerter(r);
+
   var v = $("vorschau"); v.innerHTML = "";
   felder.forEach(function (w, i) {
     var d = document.createElement("div");
     d.className = "pv" + (w ? "" : " leer") + (i === 0 && w ? " nabel" : "");
-    d.textContent = w || "—";
+    var bild = kind() && w && r.bilder[w];
+    d.innerHTML = (bild ? '<span class="b"></span>' : "") + "<span></span>";
+    if (bild) d.querySelector(".b").textContent = bild;
+    d.querySelectorAll("span")[bild ? 1 : 0].textContent = w || "—";
     v.appendChild(d);
   });
+
   $("pruef").innerHTML = fehler.length
     ? '<span class="no">Noch nicht fertig:</span><br>' + fehler.map(function (x) { return "· " + x; }).join("<br>")
-    : '<span class="ok">Sieht gut aus.</span> Neun Wörter, vier Kategorien, ein Nabelwort in allen vier.';
+    : '<span class="ok">Sieht gut aus.</span> ' + felder.length + " Wörter, " + anzahl() +
+      " Kategorien, ein Nabelwort in allen.";
 
   var bereit = fehler.length === 0;
   ["kopieren", "link", "testen"].forEach(function (id) { $(id).disabled = !bereit; });
@@ -157,16 +238,23 @@ function code(r) {
   var g = r.gruppen.map(function (x) {
     return '      { titel: ' + JSON.stringify(x.titel) + ', woerter: ' + JSON.stringify(x.woerter) + ' }';
   }).join(",\n");
+  var bilder = "";
+  if (kind()) {
+    var paare = alleWoerter(r).map(function (w) { return JSON.stringify(w) + ": " + JSON.stringify(r.bilder[w]); });
+    bilder = "    bilder: { " + paare.join(", ") + " },\n";
+  }
   return "  {\n" +
     "    id: NÄCHSTE_ID, nabel: " + JSON.stringify(r.nabel) + ", emoji: " + JSON.stringify(r.emoji) +
-    ", autor: " + JSON.stringify(r.autor || "") + ",\n" +
+    ", autor: " + JSON.stringify(r.autor || "") + ",\n" + bilder +
     "    gruppen: [\n" + g + "\n    ]\n" +
     "  }";
 }
 
 function direktlink(r) {
-  var j = JSON.stringify({ nabel: r.nabel, emoji: r.emoji, autor: r.autor, gruppen: r.gruppen });
-  var b = btoa(unescape(encodeURIComponent(j))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  var nutz = { nabel: r.nabel, emoji: r.emoji, autor: r.autor, gruppen: r.gruppen };
+  if (kind()) nutz.bilder = r.bilder;
+  var b = btoa(unescape(encodeURIComponent(JSON.stringify(nutz))))
+    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
   return location.href.replace(/build\.html.*$/, "index.html") + "#p=" + b;
 }
 
@@ -177,11 +265,14 @@ function kopiere(text, knopf, label) {
   else prompt("Kopieren:", text);
 }
 
+function setzeWelt(w) { welt = w; baueFelder(); zeichne(); }
+$("wErwachsen").onclick = function () { setzeWelt("erwachsen"); };
+$("wKinder").onclick = function () { setzeWelt("kinder"); };
 $("kopieren").onclick = function () { kopiere($("ausgabe").value, this, "Kopiert"); };
 $("link").onclick = function () { kopiere(direktlink(lies()), this, "Kopiert"); };
 $("testen").onclick = function () { location.href = direktlink(lies()); };
 document.addEventListener("input", zeichne);
-zeichne();
+setzeWelt("erwachsen");
 </script>
 </body>
 </html>

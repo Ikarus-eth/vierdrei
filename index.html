@@ -149,6 +149,33 @@ table.score td.minus:last-child{color:#F08A7A}
 .burst{position:fixed;pointer-events:none;font-size:26px;z-index:60;animation:fly .9s ease-out forwards}
 @keyframes fly{to{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(var(--rot)) scale(.5)}}
 .hint{font-size:12px;color:#93A7BC;margin-top:10px;font-style:italic}
+/* ---------- Startbildschirm ---------- */
+#start{position:fixed;inset:0;z-index:70;background:var(--ground);
+  background-image:radial-gradient(120% 80% at 50% -10%,#1B3555 0%,var(--ground) 55%,var(--ground-2) 100%);
+  display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  padding:24px 18px calc(24px + env(safe-area-inset-bottom))}
+#start.open{display:flex}
+#start .mark{font-size:34px;margin-bottom:2px}
+#start p{font-size:13.5px;color:#9FB3C9;margin:0 0 10px;text-align:center;max-width:340px;line-height:1.6}
+.weltwahl{display:flex;flex-direction:column;gap:12px;width:100%;max-width:340px}
+.weltwahl button{display:flex;align-items:center;gap:14px;width:100%;text-align:left;cursor:pointer;
+  background:#16294180;border:1px solid var(--rule);border-radius:14px;padding:16px 18px;color:var(--card);font:inherit}
+.weltwahl button:hover{background:#1E3A5A}
+.weltwahl button[aria-current="true"]{border-color:var(--brass);box-shadow:0 0 0 1px var(--brass)}
+.weltwahl .icon{font-size:34px;line-height:1}
+.weltwahl .titel{font-family:var(--disp);font-weight:500;font-size:17px;letter-spacing:.09em;text-transform:uppercase}
+.weltwahl .unter{font-size:12.5px;color:#9FB3C9;line-height:1.5;margin-top:2px}
+
+/* ---------- Kinderwelt ---------- */
+body.kinder{--ground:#173A52;--ground-2:#0D2637;--rule:#2C5570;--brass:#FFC93C}
+body.kinder{background-image:radial-gradient(120% 80% at 50% -10%,#22536F 0%,var(--ground) 55%,var(--ground-2) 100%)}
+body.kinder .card{aspect-ratio:1/.94;min-height:82px;font-size:clamp(10px,3.1vw,14px);letter-spacing:.02em}
+body.kinder .tagline{font-size:13.5px;color:#BBD2E2}
+body.kinder .plaque .titel{font-size:15px}
+body.kinder .btn{font-size:14px}
+.card .bild{display:block;font-style:normal;font-size:clamp(24px,7.8vw,36px);line-height:1.15;margin-bottom:3px}
+.sterne{font-size:30px;letter-spacing:6px;text-align:center;margin:6px 0 2px}
+
 @media (prefers-reduced-motion:reduce){
   *,*::before{animation-duration:.001s!important;transition-duration:.001s!important}
 }
@@ -163,12 +190,13 @@ table.score td.minus:last-child{color:#F08A7A}
     <div class="tools">
       <button class="tool" id="btnHilfe" title="Anleitung" aria-label="Anleitung">?</button>
       <button class="tool" id="btnPunkte" title="Punkte" aria-label="Punkte erklärt">§</button>
+      <button class="tool" id="btnTon" title="Vorlesen" aria-label="Wörter vorlesen">🔊</button>
       <button class="tool" id="btnStat" title="Statistik" aria-label="Statistik">▦</button>
-      <button class="tool" id="btnArchiv" title="Archiv" aria-label="Archiv">≡</button>
+      <button class="tool" id="btnWelt" title="Kinder oder Erwachsene" aria-label="Welt wechseln">🧒</button>
     </div>
   </header>
 
-  <p class="tagline">Vier Kategorien. Drei Wörter je Kategorie. <b>Ein Wort steht in allen vier.</b></p>
+  <p class="tagline" id="tagline"></p>
 
   <div class="status">
     <div class="left">
@@ -195,16 +223,33 @@ table.score td.minus:last-child{color:#F08A7A}
 
   <footer>
     <button class="linkish" id="btnArchiv2">Archiv</button> ·
+    <button class="linkish" id="btnWelt2">Welt wechseln</button> ·
     <button class="linkish" id="btnBauen">Rätsel bauen</button> ·
     <button class="linkish" id="btnHilfe2">Anleitung</button>
     <div style="margin-top:6px;opacity:.7">Nach dem Vorbild von <i>4×3</i> von Hank Green. Eigenständige deutsche Umsetzung.</div>
   </footer>
 </div>
 
+<div id="start">
+  <div class="mark">VIER<span class="x">×</span>DREI</div>
+  <p>Für wen ist es heute?</p>
+  <div class="weltwahl">
+    <button data-welt="kinder">
+      <span class="icon">🧒</span>
+      <span><span class="titel">Kinder</span><span class="unter">Sieben Karten mit Bildern, drei Kategorien. Keine Uhr, keine Punkte.</span></span>
+    </button>
+    <button data-welt="erwachsen">
+      <span class="icon">🧑</span>
+      <span><span class="titel">Erwachsene</span><span class="unter">Neun Karten, vier Kategorien, Punkte und Serie.</span></span>
+    </button>
+  </div>
+</div>
+
 <!-- ===================== Blätter ===================== -->
 <div class="sheet" id="sheet"><div class="panel" id="panel"></div></div>
 
 <script src="puzzles.js"></script>
+<script src="puzzles-kinder.js"></script>
 <script>
 "use strict";
 (function(){
@@ -223,6 +268,12 @@ var PUNKTE = {
   fehler:-15, fehlerSpaet:-30, nabelZuletzt:-100
 };
 var TAG0 = Date.UTC(2026,0,1)/86400000;
+/* Zwei Welten, eine Maschine. "kinder" hat drei Kategorien statt vier, Bilder
+ * auf den Karten, keine Uhr und keine Punkte. Alles andere ist identisch. */
+var welt = null;
+function katalog(){ return welt==="kinder" ? window.VMD_KINDER : window.VMD_PUZZLES; }
+function ns(){ return welt==="kinder" ? "vmd.kinder." : "vmd."; }
+function anzahlGruppen(){ return S ? S.raetsel.gruppen.length : 4; }
 var LS = {
   hol:function(k,d){ try{ var v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } },
   setz:function(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
@@ -240,7 +291,7 @@ function datumVonNr(nr){
 }
 function raetselVonNr(nr){
   if(nr===0 && gastRaetsel) return gastRaetsel;
-  var p=window.VMD_PUZZLES;
+  var p=katalog();
   return p[((nr-1)%p.length+p.length)%p.length];
 }
 /* Direktlink aus build.html: #p=<base64url(json)>. Nr. 0 = Gastrunde,
@@ -270,9 +321,10 @@ function mische(a,seed){
 
 /* ---------------- Zustand ---------------- */
 var S = null;          // laufendes Spiel
-var opt = LS.hol("vmd.opt",{modus:"schwer"});
+var opt = LS.hol("vmd.opt",{modus:"schwer",ton:true});
+if(opt.ton===undefined) opt.ton=true;
 
-function schluessel(nr){ return "vmd.spiel."+nr; }
+function schluessel(nr){ return ns()+"spiel."+nr; }
 
 function neuesSpiel(nr){
   var r=raetselVonNr(nr);
@@ -283,7 +335,7 @@ function neuesSpiel(nr){
     return;
   }
   S={
-    nr:nr, raetsel:r,
+    nr:nr, welt:welt, raetsel:r,
     reihenfolge:mische(alleWoerter(r), nr*7919),
     geloest:[],            // Indizes der Gruppen in Lösungsreihenfolge
     versuche:[],           // "t0".."t3" bei Treffer, "x" bei Fehler
@@ -291,7 +343,9 @@ function neuesSpiel(nr){
     nabelZuletztZaehler:0, fertig:false, punkte:null,
     modus:opt.modus
   };
-  sichere();
+  // Nicht sofort speichern: ein unberührtes Spiel schreibt sonst beim Booten in
+  // beide Welten. Die Kartenreihenfolge ist aus der Nummer abgeleitet und
+  // entsteht beim nächsten Öffnen identisch neu.
 }
 function sichere(){
   if(!S || S.nr===0) return;   // Gastrunde aus einem Direktlink bleibt flüchtig
@@ -301,7 +355,7 @@ function sichere(){
 }
 
 /* ---------------- Statistik ---------------- */
-function statsHol(){ return LS.hol("vmd.stats",{gespielt:0,serie:0,maxSerie:0,letzteNr:0,punkte:0}); }
+function statsHol(){ return LS.hol(ns()+"stats",{gespielt:0,serie:0,maxSerie:0,letzteNr:0,punkte:0}); }
 function statsSchreib(nr,punkte){
   var st=statsHol();
   if(nr===0) return st;                        // Direktlink zählt nicht
@@ -310,7 +364,7 @@ function statsSchreib(nr,punkte){
   st.serie = (st.letzteNr===nr-1)?st.serie+1:1;
   if(st.serie>st.maxSerie) st.maxSerie=st.serie;
   st.letzteNr=nr; st.punkte+=punkte;
-  LS.setz("vmd.stats",st); return st;
+  LS.setz(ns()+"stats",st); return st;
 }
 function serieJetzt(nr){
   var st=statsHol();
@@ -325,7 +379,7 @@ var sel=[];   // geordnete Wortliste
 
 function offeneGruppen(){
   var o=[];
-  for(var i=0;i<4;i++) if(S.geloest.indexOf(i)<0) o.push(i);
+  for(var i=0;i<S.raetsel.gruppen.length;i++) if(S.geloest.indexOf(i)<0) o.push(i);
   return o;
 }
 /* Alle neun Karten bleiben liegen. Gelöste Nebenwörter werden eingefärbt und
@@ -339,20 +393,34 @@ function istFest(w){ return w!==S.raetsel.nabel && festeWoerter().hasOwnProperty
 
 /* ---------------- Zeichnen ---------------- */
 function ringGradient(){
-  var teile=[], grad=0, i;
-  for(i=0;i<4;i++){
+  // Ein Segment je Kategorie — vier Viertel bei Erwachsenen, drei Drittel bei
+  // Kindern. Das erste Segment sitzt oben mittig.
+  var n=anzahlGruppen(), schritt=360/n, teile=[], grad=0, i;
+  for(i=0;i<n;i++){
     var farbe = i<S.geloest.length ? TIER[S.geloest[i]].farbe : "#D9A44133";
-    teile.push(farbe+" "+grad+"deg "+(grad+90)+"deg"); grad+=90;
+    teile.push(farbe+" "+grad+"deg "+(grad+schritt)+"deg"); grad+=schritt;
   }
-  return "conic-gradient(from -45deg,"+teile.join(",")+")";
+  return "conic-gradient(from "+(-schritt/2)+"deg,"+teile.join(",")+")";
 }
 
 function zeichne(){
   // Kopf
+  var kind = S.welt==="kinder";
   $("nr").textContent = S.nr===0 ? "Direktlink" : "Nr. "+S.nr;
-  $("fehler").innerHTML = S.fehler ? "Fehler <b>"+S.fehler+"</b>" : "";
+  // Kinder spielen ohne Uhr, ohne Fehlerzähler und ohne Schwierigkeitswahl —
+  // das sind Druckmittel, die hier nichts verbessern.
+  $("uhr").style.display = kind ? "none" : "";
+  $("fehler").innerHTML = (!kind && S.fehler) ? "Fehler <b>"+S.fehler+"</b>" : "";
+  $("modeLeicht").parentNode.style.display = kind ? "none" : "";
+  $("btnPunkte").style.display = kind ? "none" : "";
+  $("btnTon").style.display = kind ? "" : "none";
+  $("btnTon").textContent = opt.ton ? "🔊" : "🔇";
+  $("btnWelt").textContent = kind ? "🧒" : "🧑";
   $("modeLeicht").setAttribute("aria-pressed", S.modus==="leicht");
   $("modeSchwer").setAttribute("aria-pressed", S.modus==="schwer");
+  $("tagline").innerHTML = kind
+    ? "Drei Gruppen. Drei Karten je Gruppe. <b>Ein Wort passt überall.</b>"
+    : "Vier Kategorien. Drei Wörter je Kategorie. <b>Ein Wort steht in allen vier.</b>";
 
   // gelöste Plaketten
   var g=$("geloest"); g.innerHTML="";
@@ -371,14 +439,17 @@ function zeichne(){
   // Das Nabelwort wird erst ab der zweiten gelösten Gruppe markiert. Nach der
   // ersten trägt es die Farbe dieser Gruppe und sieht aus wie jede andere
   // gelöste Karte — verrät sich also nicht.
-  var zeigeNabel = S.modus==="leicht" || S.geloest.length>=2 || S.fertig;
+  var zeigeNabel = S.welt==="kinder" || S.modus==="leicht" || S.geloest.length>=2 || S.fertig;
   S.reihenfolge.forEach(function(w){
     var nabel = w===S.raetsel.nabel, gi = nabel ? (S.geloest.length?S.geloest[0]:-1) : (fest.hasOwnProperty(w)?fest[w]:-1);
     var markiert = nabel && zeigeNabel;
     var b=document.createElement("button");
     b.type="button";
     b.className="card"+(markiert?" hub":"")+(!nabel&&gi>=0?" fest":"");
-    b.innerHTML="<span></span>"; b.querySelector("span").textContent=w;
+    var bild = S.raetsel.bilder && S.raetsel.bilder[w];
+    b.innerHTML=(bild?'<i class="bild"></i>':"")+"<span></span>";
+    if(bild) b.querySelector(".bild").textContent=bild;
+    b.querySelector("span").textContent=w;
     var gewaehlt = sel.indexOf(w)>=0;
     if(gi>=0 && !markiert){
       if(!gewaehlt){ b.style.background=TIER[gi].farbe; b.style.color=TIER[gi].schrift; }
@@ -416,8 +487,18 @@ function tippe(w){
   if(S.fertig||istFest(w)) return;
   var i=sel.indexOf(w);
   if(i>=0) sel.splice(i,1);
-  else { if(sel.length===3) return; sel.push(w); }
+  else { if(sel.length===3) return; sel.push(w); sprich(w); }
   zeichne(); sag("");
+}
+/* Vorlesen ist die eigentliche Hilfe für Kinder, die noch nicht sicher lesen:
+ * Bild sehen, antippen, Wort hören. Fehlt die Sprachausgabe, passiert nichts. */
+function sprich(w){
+  if(welt!=="kinder" || !opt.ton) return;
+  try{
+    var u=new SpeechSynthesisUtterance(w);
+    u.lang="de-DE"; u.rate=0.8;
+    window.speechSynthesis.cancel(); window.speechSynthesis.speak(u);
+  }catch(e){}
 }
 
 function pruefe(){
@@ -435,9 +516,9 @@ function pruefe(){
     S.geloest.push(treffer);
     sel=[];
     zeichne(); sichere();
-    if(S.geloest.length===3){ setTimeout(letzteAufloesen,420); }
-    else if(S.geloest.length===4){ setTimeout(gewonnen,420); }
-    else if(S.geloest.length===1 && S.modus==="schwer")
+    if(S.geloest.length===anzahlGruppen()-1){ setTimeout(letzteAufloesen,420); }
+    else if(S.geloest.length===anzahlGruppen()){ setTimeout(gewonnen,420); }
+    else if(S.geloest.length===1 && S.modus==="schwer" && S.welt!=="kinder")
       sag(S.raetsel.gruppen[treffer].titel+" — eins dieser drei geht weiter.");
     else sag(S.raetsel.gruppen[treffer].titel);
     return;
@@ -455,7 +536,12 @@ function pruefe(){
     var n=sel.filter(function(w){ return soll.indexOf(w)>=0; }).length;
     if(n===2) fast=true;
   });
-  if(sel.indexOf(nabel)<0 && S.geloest.length>0) sag("Das Nabelwort fehlt in der Auswahl.");
+  if(S.welt==="kinder"){
+    if(sel.indexOf(nabel)<0) sag("Das Wort mit dem goldenen Rand gehört immer dazu.");
+    else if(fast) sag("Fast! Zwei davon passen zusammen.");
+    else sag("Noch nicht. Probier eine andere Karte.");
+  }
+  else if(sel.indexOf(nabel)<0 && S.geloest.length>0) sag("Das Nabelwort fehlt in der Auswahl.");
   else if(fast) sag("Fast — zwei davon gehören zusammen.");
   else sag("Nicht diese drei.");
   sichere(); zeichne();
@@ -472,11 +558,39 @@ function letzteAufloesen(){
 function gewonnen(){
   S.fertig=true;
   S.sekunden=Math.floor((Date.now()-S.startMs)/1000);
-  var p=rechnePunkte();
+  var kind=S.welt==="kinder";
+  var p = kind ? {zeilen:[],summe:0,serie:serieJetzt(S.nr)} : rechnePunkte();
   S.punkte=p.summe;
   var st=statsSchreib(S.nr,p.summe);
   sichere(); zeichne();
-  zeigeErgebnis(p,st);
+  if(kind) zeigeErgebnisKinder(st); else zeigeErgebnis(p,st);
+}
+
+function zeigeErgebnisKinder(st){
+  var sterne=new Array(S.geloest.length+1).join("⭐");
+  oeffne(
+    '<h2>Geschafft!</h2>'+
+    '<div class="sterne">'+sterne+'</div>'+
+    '<p>Alle drei Gruppen gefunden. In jeder steckte <b>'+S.raetsel.nabel+'</b> '+
+      (S.raetsel.bilder&&S.raetsel.bilder[S.raetsel.nabel]||"")+' — das Wort passt überall.</p>'+
+    '<div class="stats">'+
+      '<div><b>'+st.gespielt+'</b><span>gelöst</span></div>'+
+      '<div><b>'+st.serie+'</b><span>Tage in Folge</span></div>'+
+      '<div><b>'+st.maxSerie+'</b><span>Bestwert</span></div>'+
+    '</div>'+
+    '<div class="controls" style="margin-top:14px">'+
+      '<button class="btn primary" id="teilen">Zeigen</button>'+
+      '<button class="btn" id="zumArchiv">Frühere Rätsel</button>'+
+    '</div>'+
+    '<p class="hint">Tippe im Raster auf '+(S.raetsel.bilder&&S.raetsel.bilder[S.raetsel.nabel]||S.raetsel.nabel)+'.</p>'
+  );
+  $("teilen").onclick=function(){
+    var t=teilenText();
+    if(navigator.share) navigator.share({text:t}).catch(function(){});
+    else if(navigator.clipboard) navigator.clipboard.writeText(t).then(function(){ $("teilen").textContent="Kopiert"; });
+    else prompt("Kopieren:",t);
+  };
+  $("zumArchiv").onclick=zeigeArchiv;
 }
 
 function rechnePunkte(){
@@ -521,7 +635,10 @@ function emojiZeile(){
   return S.versuche.map(function(v){ return v==="x"?"⬜":TIER[+v[1]].emoji; }).join("");
 }
 function teilenText(){
-  return "VIER×DREI "+(S.nr===0?"Direktlink":"Nr. "+S.nr)+" · "+(S.modus==="leicht"?"leicht":"schwer")+"\n"+
+  var kopf="VIER×DREI "+(S.nr===0?"Direktlink":"Nr. "+S.nr);
+  if(S.welt==="kinder")
+    return kopf+" · Kinder\n"+emojiZeile()+"\nAlle drei Gruppen gefunden!\n"+location.origin+location.pathname;
+  return kopf+" · "+(S.modus==="leicht"?"leicht":"schwer")+"\n"+
          emojiZeile()+"\n"+
          S.punkte+" Punkte · "+zeit(S.sekunden)+" · Serie "+serieJetzt(S.nr)+"\n"+
          location.origin+location.pathname;
@@ -593,6 +710,7 @@ function teileBild(){
 }
 
 function zeigeHilfe(){
+  if(welt==="kinder") return zeigeHilfeKinder();
   oeffne(
     '<h2>So geht’s</h2>'+
     '<p>Neun Wörter. Sie gehören zu vier Kategorien mit je drei Wörtern — und <b>ein Wort steht in allen vier</b>. Das ist das <b>Nabelwort</b>.</p>'+
@@ -607,6 +725,21 @@ function zeigeHilfe(){
     '<p><b>Leicht</b> markiert das Nabelwort von Anfang an — dafür gibt es 25 % weniger Punkte. <b>Schwer</b> verrät nichts.</p>'+
     '<h3>Herkunft</h3>'+
     '<p>Das Spielprinzip stammt von <i>4×3</i> von Hank Green. Dies hier ist eine eigenständige deutsche Umsetzung mit eigenen Rätseln und eigenem Code.</p>'
+  );
+}
+
+function zeigeHilfeKinder(){
+  oeffne(
+    '<h2>So geht’s</h2>'+
+    '<p>Sieben Karten. Immer drei gehören zusammen — und <b>ein Wort passt in alle drei Gruppen</b>. Das Wort hat einen goldenen Rand.</p>'+
+    '<ul>'+
+      '<li>Tippe drei Karten an, die zusammenpassen. Dann auf <b>Prüfen</b>.</li>'+
+      '<li>Das Wort mit dem goldenen Rand gehört <b>immer</b> dazu.</li>'+
+      '<li>Stimmt die Gruppe, färben sich die Karten ein und bleiben liegen.</li>'+
+      '<li>Falsch geraten kostet nichts. Probier ruhig weiter.</li>'+
+      '<li>Mit 🔊 oben wird jedes angetippte Wort vorgelesen.</li>'+
+    '</ul>'+
+    '<p class="hint">Jeden Tag gibt es ein neues Rätsel.</p>'
   );
 }
 
@@ -629,16 +762,17 @@ function zeigePunkteregeln(){
 }
 
 function zeigeStatistik(){
-  var st=statsHol();
+  var st=statsHol(), kind=welt==="kinder";
   oeffne(
     '<h2>Statistik</h2>'+
+    '<p>'+(kind?"Kinder":"Erwachsene")+'</p>'+
     '<div class="stats">'+
       '<div><b>'+st.gespielt+'</b><span>gelöst</span></div>'+
-      '<div><b>'+Math.round(st.punkte/Math.max(1,st.gespielt))+'</b><span>Ø Punkte</span></div>'+
+      (kind?'':'<div><b>'+Math.round(st.punkte/Math.max(1,st.gespielt))+'</b><span>Ø Punkte</span></div>')+
       '<div><b>'+st.serie+'</b><span>Serie</span></div>'+
       '<div><b>'+st.maxSerie+'</b><span>beste Serie</span></div>'+
     '</div>'+
-    '<p style="margin-top:14px">Punkte insgesamt: <b>'+st.punkte+'</b></p>'+
+    (kind?'':'<p style="margin-top:14px">Punkte insgesamt: <b>'+st.punkte+'</b></p>')+
     '<div class="controls" style="margin-top:10px"><button class="btn" id="reset">Statistik löschen</button></div>'
   );
   $("reset").onclick=function(){
@@ -705,16 +839,43 @@ $("modeSchwer").onclick=function(){ setzeModus("schwer"); };
 $("btnHilfe").onclick=zeigeHilfe; $("btnHilfe2").onclick=zeigeHilfe;
 $("btnPunkte").onclick=zeigePunkteregeln;
 $("btnStat").onclick=zeigeStatistik;
-$("btnArchiv").onclick=zeigeArchiv; $("btnArchiv2").onclick=zeigeArchiv;
+$("btnArchiv2").onclick=zeigeArchiv;
 $("btnBauen").onclick=function(){ location.href="build.html"; };
+
+/* ---------------- Welten ---------------- */
+function setzeWelt(w){
+  welt=w; LS.setz("vmd.welt",w);
+  document.body.classList.toggle("kinder", w==="kinder");
+  $("start").classList.remove("open");
+  schliesse(); sel=[];
+  starte(gastRaetsel ? 0 : heutigeNr());
+  if(!LS.hol(ns()+"gesehen",false)){ LS.setz(ns()+"gesehen",true); zeigeHilfe(); }
+}
+function zeigeStart(){
+  Array.prototype.forEach.call($("start").querySelectorAll("[data-welt]"),function(b){
+    b.setAttribute("aria-current", b.dataset.welt===welt);
+  });
+  schliesse(); $("start").classList.add("open");
+}
+Array.prototype.forEach.call(document.querySelectorAll("#start [data-welt]"),function(b){
+  b.addEventListener("click",function(){ setzeWelt(b.dataset.welt); });
+});
+$("btnWelt").onclick=zeigeStart; $("btnWelt2").onclick=zeigeStart;
+$("btnTon").onclick=function(){
+  opt.ton=!opt.ton; LS.setz("vmd.opt",opt); zeichne();
+  if(opt.ton) sprich("Ton an");
+};
 
 /* ---------------- Start ---------------- */
 function starte(nr){
   sel=[]; neuesSpiel(nr); zeichne(); sag("");
   if(S.fertig) zeigeErgebnis(rechnePunkte(), statsHol());
 }
-starte(gastRaetsel ? 0 : heutigeNr());
-if(!LS.hol("vmd.gesehen",false)){ LS.setz("vmd.gesehen",true); zeigeHilfe(); }
+var gewaehlteWelt = LS.hol("vmd.welt", null);
+// Ein Direktlink bringt seine eigene Welt mit: drei Gruppen oder Bilder = Kinder.
+if(gastRaetsel) gewaehlteWelt = (gastRaetsel.gruppen.length===3 || gastRaetsel.bilder) ? "kinder" : "erwachsen";
+setzeWelt(gewaehlteWelt || "erwachsen");
+if(!gewaehlteWelt) zeigeStart();
 
 if("serviceWorker" in navigator){
   window.addEventListener("load",function(){

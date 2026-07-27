@@ -5,17 +5,26 @@ const { JSDOM } = require("jsdom");
 
 const ROOT = path.join(__dirname, "..");
 
-function html() {
+function html(speicher) {
   let h = fs.readFileSync(path.join(ROOT, "index.html"), "utf8");
   const p = fs.readFileSync(path.join(ROOT, "puzzles.js"), "utf8");
+  const k = fs.readFileSync(path.join(ROOT, "puzzles-kinder.js"), "utf8");
   h = h.replace(/<link[^>]*fonts\.(googleapis|gstatic)[^>]*>/g, "");
   h = h.replace(/<link rel="manifest"[^>]*>/, "");
   h = h.replace('<script src="puzzles.js"></script>', "<script>" + p + "<\/script>");
+  h = h.replace('<script src="puzzles-kinder.js"></script>', "<script>" + k + "<\/script>");
+  if (speicher) {
+    // Wird vor dem App-Skript ausgeführt und simuliert einen früheren Besuch.
+    const prime = Object.entries(speicher)
+      .map(([k2, v]) => "localStorage.setItem(" + JSON.stringify(k2) + "," + JSON.stringify(JSON.stringify(v)) + ");")
+      .join("");
+    h = h.replace("<head>", "<head><script>" + prime + "<\/script>");
+  }
   return h;
 }
 
 async function lade(opts = {}) {
-  const dom = new JSDOM(html(), {
+  const dom = new JSDOM(html(opts.speicher), {
     runScripts: "dangerously",
     pretendToBeVisual: true,
     url: opts.url || "https://example.test/vierdrei/"
@@ -23,6 +32,10 @@ async function lade(opts = {}) {
   const { window } = dom;
   window.navigator.serviceWorker = undefined;
   await neuerTick(window, 20);
+  if (opts.welt) {                        // Welt umschalten wie ein Tastendruck
+    window.document.querySelector('#start [data-welt="' + opts.welt + '"]').click();
+    await neuerTick(window, 20);
+  }
   const x = window.document.getElementById("x");
   if (x) x.click();                       // Anleitung beim ersten Start schließen
   return { dom, window, doc: window.document };
@@ -61,5 +74,8 @@ function meldung(doc) {
 function offen(doc) {
   return doc.getElementById("sheet").classList.contains("open");
 }
+function startOffen(doc) {
+  return doc.getElementById("start").classList.contains("open");
+}
 
-module.exports = { lade, neuerTick, karten, karte, wortVon, waehle, pruefe, plaketten, meldung, offen, ROOT };
+module.exports = { lade, neuerTick, karten, karte, wortVon, waehle, pruefe, plaketten, meldung, offen, startOffen, ROOT };
