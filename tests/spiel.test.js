@@ -392,12 +392,12 @@ test("ohne Wahl erscheint der Startbildschirm über dem Spiel", async () => {
   window.close();
 });
 
-test("Kinderwelt zeigt sieben Karten und drei Kategorien", async () => {
+test("Kinderwelt zeigt neun Karten und vier Kategorien", async () => {
   const { window, doc } = await H.lade({ welt: "kinder" });
   const { r } = heutigesKinderraetsel(window);
   assert.ok(!H.startOffen(doc), "Startbildschirm bleibt offen");
-  assert.strictEqual(H.karten(doc).length, 7);
-  assert.strictEqual(r.gruppen.length, 3);
+  assert.strictEqual(H.karten(doc).length, 9);
+  assert.strictEqual(r.gruppen.length, 4);
   const soll = [r.nabel].concat(...r.gruppen.map((g) => g.woerter)).sort();
   assert.deepStrictEqual(H.karten(doc).map(H.wortVon).sort(), soll);
   window.close();
@@ -412,12 +412,28 @@ test("jede Kinderkarte trägt ein Bild", async () => {
   window.close();
 });
 
-test("das Nabelwort ist für Kinder von Anfang an markiert", async () => {
+test("das Nabelwort ist auch für Kinder erst ab der zweiten Gruppe markiert", async () => {
   const { window, doc } = await H.lade({ welt: "kinder" });
   const { r } = heutigesKinderraetsel(window);
+  assert.strictEqual(doc.querySelectorAll("#raster .card.hub").length, 0, "sofort markiert");
+  H.waehle(doc, [r.nabel].concat(r.gruppen[0].woerter));
+  H.pruefe(doc);
+  await H.neuerTick(window, 30);
+  assert.strictEqual(doc.querySelectorAll("#raster .card.hub").length, 0, "nach einer Gruppe markiert");
+  H.waehle(doc, [r.nabel].concat(r.gruppen[1].woerter));
+  H.pruefe(doc);
+  await H.neuerTick(window, 30);
   const hub = doc.querySelectorAll("#raster .card.hub");
-  assert.strictEqual(hub.length, 1, "nicht markiert");
+  assert.strictEqual(hub.length, 1, "nach zwei Gruppen nicht markiert");
   assert.strictEqual(H.wortVon(hub[0]), r.nabel);
+  window.close();
+});
+
+test("ein geerbtes Leicht aus der Erwachsenenwelt verrät Kindern nichts", async () => {
+  // Die Modusumschaltung ist bei Kindern versteckt; ohne die Zwangsumstellung
+  // auf "schwer" bliebe ein früher gewähltes "leicht" wirksam.
+  const { window, doc } = await H.lade({ speicher: { "vmd.welt": "kinder", "vmd.opt": { modus: "leicht", ton: true } } });
+  assert.strictEqual(doc.querySelectorAll("#raster .card.hub").length, 0);
   window.close();
 });
 
@@ -433,19 +449,20 @@ test("Kinder spielen ohne Uhr, ohne Fehlerzähler und ohne Schwierigkeitswahl", 
   window.close();
 });
 
-test("zwei gelöste Kindergruppen lösen die dritte automatisch auf", async () => {
+test("drei gelöste Kindergruppen lösen die vierte automatisch auf", async () => {
   const { window, doc } = await H.lade({ welt: "kinder" });
   const { r } = heutigesKinderraetsel(window);
-  for (let i = 0; i < 2; i++) {
+  for (let i = 0; i < 3; i++) {
     H.waehle(doc, [r.nabel].concat(r.gruppen[i].woerter));
     H.pruefe(doc);
     await H.neuerTick(window, 30);
   }
   await H.neuerTick(window, 1000);
-  assert.strictEqual(H.plaketten(doc).length, 3, "dritte Gruppe nicht aufgelöst");
+  assert.strictEqual(H.plaketten(doc).length, 4, "vierte Gruppe nicht aufgelöst");
   assert.ok(H.offen(doc), "kein Ergebnis");
   const txt = doc.getElementById("panel").textContent;
   assert.ok(/Geschafft/.test(txt), "kein Kinder-Ergebnis: " + txt.slice(0, 60));
+  assert.ok(/⭐⭐⭐⭐/.test(txt), "nicht vier Sterne");
   assert.ok(!/Punkte/.test(txt), "Punkte im Kinder-Ergebnis");
   window.close();
 });
@@ -476,7 +493,7 @@ test("eine gemerkte Welt startet ohne Startbildschirm", async () => {
   const { window, doc } = await H.lade({ speicher: { "vmd.welt": "kinder" } });
   assert.ok(!H.startOffen(doc), "Startbildschirm trotz gemerkter Welt");
   assert.ok(doc.body.classList.contains("kinder"), "falsche Welt");
-  assert.strictEqual(H.karten(doc).length, 7);
+  assert.strictEqual(H.karten(doc).length, 9);
   window.close();
 });
 
@@ -486,7 +503,8 @@ test("der Weltwechsler öffnet den Startbildschirm wieder", async () => {
   assert.ok(H.startOffen(doc));
   doc.querySelector('#start [data-welt="kinder"]').click();
   await H.neuerTick(window, 20);
-  assert.strictEqual(H.karten(doc).length, 7);
+  assert.strictEqual(H.karten(doc).length, 9);
+  assert.ok(doc.querySelector("#raster .card .bild"), "keine Bilder nach dem Wechsel");
   window.close();
 });
 
@@ -494,6 +512,7 @@ test("die Anleitung passt sich der Welt an", async () => {
   const k = await H.lade({ welt: "kinder" });
   k.doc.getElementById("btnHilfe").click();
   assert.ok(/goldenen Rand/.test(k.doc.getElementById("panel").textContent));
+  assert.ok(/vier Gruppen/.test(k.doc.getElementById("panel").textContent));
   k.window.close();
   const e = await H.lade({ welt: "erwachsen" });
   e.doc.getElementById("btnHilfe").click();
@@ -507,7 +526,7 @@ test("jedes Kinderrätsel ist vollständig und lösbar", async () => {
   window.close();
   P.forEach((r) => {
     const felder = [r.nabel].concat(...r.gruppen.map((g) => g.woerter));
-    assert.strictEqual(new Set(felder).size, 7, r.nabel);
+    assert.strictEqual(new Set(felder).size, 9, r.nabel);
     r.gruppen.forEach((g, i) => {
       const drei = [r.nabel].concat(g.woerter);
       assert.strictEqual(new Set(drei).size, 3, r.nabel + " Gruppe " + (i + 1));

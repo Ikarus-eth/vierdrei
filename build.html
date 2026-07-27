@@ -47,7 +47,7 @@ legend{font-family:var(--disp);font-size:12px;letter-spacing:.1em;text-transform
 .pv{flex:0 0 calc((100% - 16px)/3);aspect-ratio:1/.72;min-height:60px;border-radius:9px;background:var(--card);color:var(--ink);
   font-family:var(--disp);font-weight:500;font-size:clamp(10px,3.2vw,15px);display:flex;flex-direction:column;
   align-items:center;justify-content:center;text-align:center;padding:5px;box-shadow:0 2px 0 var(--card-edge);word-break:break-word}
-body.kinder .pv{aspect-ratio:1/.94}
+body.kinder .pv{aspect-ratio:1/.86}
 .pv .b{font-size:clamp(20px,7vw,30px);line-height:1.15}
 .pv.leer{background:#0E1E33;color:#40587A;box-shadow:inset 0 0 0 1px var(--rule)}
 .pv.nabel{box-shadow:0 0 0 3px var(--brass),0 2px 0 var(--card-edge)}
@@ -75,8 +75,8 @@ textarea{width:100%;min-height:190px;background:#0B1726;border:1px solid var(--r
   <h1>Rätsel bauen</h1>
 
   <div class="welt" role="group" aria-label="Für wen">
-    <button id="wErwachsen" aria-pressed="true">🧑 Erwachsene · 4 Kategorien</button>
-    <button id="wKinder" aria-pressed="false">🧒 Kinder · 3 Kategorien</button>
+    <button id="wErwachsen" aria-pressed="true">🧑 Erwachsene · ohne Bilder</button>
+    <button id="wKinder" aria-pressed="false">🧒 Kinder · mit Bildern</button>
   </div>
 
   <p class="lead" id="lead"></p>
@@ -111,16 +111,12 @@ var welt = "erwachsen";
 
 function $(id) { return document.getElementById(id); }
 function kind() { return welt === "kinder"; }
-function anzahl() { return kind() ? 3 : 4; }
+function anzahl() { return 4; }
 function norm(s) { return (s || "").trim().toUpperCase().replace(/ß/g, "SS"); }
 function roh(id) { var e = $(id); return e && e.value ? e.value.trim() : ""; }
 
-/* Für Kinder ist die dritte Stufe schon die schwerste — die Beschriftung darf
- * nicht von einer vierten reden, die es nicht gibt. */
 function stufenname(i) {
-  return kind()
-    ? ["Stufe 1 — am leichtesten", "Stufe 2", "Stufe 3 — am schwersten"][i]
-    : ["Stufe 1 — am leichtesten", "Stufe 2", "Stufe 3", "Stufe 4 — am fiesesten"][i];
+  return ["Stufe 1 — am leichtesten", "Stufe 2", "Stufe 3", "Stufe 4 — am fiesesten"][i];
 }
 
 function wortZeile(i, s) {
@@ -151,7 +147,7 @@ function baueFelder() {
   $("wKinder").setAttribute("aria-pressed", kind());
   document.body.classList.toggle("kinder", kind());
   $("lead").innerHTML = kind()
-    ? "Wähle zuerst das <b>Nabelwort</b> — es passt in alle drei Gruppen. Dann je zwei weitere Wörter. Jedes Wort braucht ein <b>Bild</b>, sonst kommt ein Kind, das noch nicht sicher liest, nicht weiter."
+    ? "Wähle zuerst das <b>Nabelwort</b> — es passt in alle vier Gruppen. Dann je zwei weitere Wörter. Jedes Wort braucht ein <b>Bild</b>, sonst kommt ein Kind, das noch nicht sicher liest, nicht weiter. Wörter aus dem Alltag nehmen, keine Wortspiele."
     : "Wähle zuerst das <b>Nabelwort</b> — es passt in alle vier Kategorien. Dann je zwei weitere Wörter pro Kategorie. Jedes dieser Wörter darf <b>nur</b> in seine eigene Kategorie passen, sonst hat das Rätsel mehr als eine Lösung.";
   $("ziel").innerHTML = kind()
     ? "Der Code kommt ans Ende der Liste in <b>puzzles-kinder.js</b>, die <code>id</code> wird hochgezählt. Danach <code>tests/run.sh</code>."

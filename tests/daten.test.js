@@ -12,7 +12,7 @@ new Function("window", fs.readFileSync(path.join(__dirname, "..", "puzzles-kinde
 // nur in der Zahl der Kategorien und darin, dass Kinderrätsel Bilder brauchen.
 const KATALOGE = [
   { name: "Erwachsene", liste: win.VMD_PUZZLES, gruppen: 4, bilder: false, min: 14 },
-  { name: "Kinder", liste: win.VMD_KINDER, gruppen: 3, bilder: true, min: 10 }
+  { name: "Kinder", liste: win.VMD_KINDER, gruppen: 4, bilder: true, min: 10 }
 ];
 const P = win.VMD_PUZZLES;
 const alleRaetsel = KATALOGE.flatMap((k) => k.liste.map((r) => [k, r]));
@@ -32,7 +32,7 @@ test("fortlaufende, eindeutige IDs ab 1", () => {
     k.liste.forEach((r, i) => assert.strictEqual(r.id, i + 1, k.name + ": ID-Lücke bei Index " + i)));
 });
 
-test("Erwachsene haben vier Gruppen, Kinder drei", () => {
+test("jedes Rätsel hat vier Gruppen", () => {
   jedes((r, k) => assert.strictEqual(r.gruppen.length, k.gruppen, bez(k, r) + ": " + r.gruppen.length));
 });
 
@@ -42,7 +42,7 @@ test("jede Karte im Kinderrätsel hat ein Bild", () => {
     assert.ok(r.bilder, r.nabel + ": keine Bilder");
     [r.nabel].concat(...r.gruppen.map((g) => g.woerter)).forEach((w) =>
       assert.ok(r.bilder[w], r.nabel + ": kein Bild für " + w));
-    assert.strictEqual(Object.keys(r.bilder).length, 7, r.nabel + ": Bilder passen nicht zu sieben Karten");
+    assert.strictEqual(Object.keys(r.bilder).length, 9, r.nabel + ": Bilder passen nicht zu neun Karten");
   });
 });
 

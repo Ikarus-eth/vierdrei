@@ -169,11 +169,11 @@ table.score td.minus:last-child{color:#F08A7A}
 /* ---------- Kinderwelt ---------- */
 body.kinder{--ground:#173A52;--ground-2:#0D2637;--rule:#2C5570;--brass:#FFC93C}
 body.kinder{background-image:radial-gradient(120% 80% at 50% -10%,#22536F 0%,var(--ground) 55%,var(--ground-2) 100%)}
-body.kinder .card{aspect-ratio:1/.94;min-height:82px;font-size:clamp(10px,3.1vw,14px);letter-spacing:.02em}
+body.kinder .card{aspect-ratio:1/.78;min-height:74px;font-size:clamp(9.5px,3vw,13px);letter-spacing:.02em}
 body.kinder .tagline{font-size:13.5px;color:#BBD2E2}
 body.kinder .plaque .titel{font-size:15px}
 body.kinder .btn{font-size:14px}
-.card .bild{display:block;font-style:normal;font-size:clamp(24px,7.8vw,36px);line-height:1.15;margin-bottom:3px}
+.card .bild{display:block;font-style:normal;font-size:clamp(19px,6.2vw,27px);line-height:1.15;margin-bottom:2px}
 .sterne{font-size:30px;letter-spacing:6px;text-align:center;margin:6px 0 2px}
 
 @media (prefers-reduced-motion:reduce){
@@ -236,11 +236,11 @@ body.kinder .btn{font-size:14px}
   <div class="weltwahl">
     <button data-welt="kinder">
       <span class="icon">🧒</span>
-      <span><span class="titel">Kinder</span><span class="unter">Sieben Karten mit Bildern, drei Kategorien. Keine Uhr, keine Punkte.</span></span>
+      <span><span class="titel">Kinder</span><span class="unter">Neun Karten mit Bildern, Wörter zum Anhören. Keine Uhr, keine Punkte.</span></span>
     </button>
     <button data-welt="erwachsen">
       <span class="icon">🧑</span>
-      <span><span class="titel">Erwachsene</span><span class="unter">Neun Karten, vier Kategorien, Punkte und Serie.</span></span>
+      <span><span class="titel">Erwachsene</span><span class="unter">Neun Karten ohne Bilder, Uhr, Punkte und Serie.</span></span>
     </button>
   </div>
 </div>
@@ -341,7 +341,7 @@ function neuesSpiel(nr){
     versuche:[],           // "t0".."t3" bei Treffer, "x" bei Fehler
     fehler:0, sekunden:0, startMs:Date.now(),
     nabelZuletztZaehler:0, fertig:false, punkte:null,
-    modus:opt.modus
+    modus: welt==="kinder" ? "schwer" : opt.modus
   };
   // Nicht sofort speichern: ein unberührtes Spiel schreibt sonst beim Booten in
   // beide Welten. Die Kartenreihenfolge ist aus der Nummer abgeleitet und
@@ -419,7 +419,7 @@ function zeichne(){
   $("modeLeicht").setAttribute("aria-pressed", S.modus==="leicht");
   $("modeSchwer").setAttribute("aria-pressed", S.modus==="schwer");
   $("tagline").innerHTML = kind
-    ? "Drei Gruppen. Drei Karten je Gruppe. <b>Ein Wort passt überall.</b>"
+    ? "Vier Gruppen. Drei Karten je Gruppe. <b>Ein Wort passt überall.</b>"
     : "Vier Kategorien. Drei Wörter je Kategorie. <b>Ein Wort steht in allen vier.</b>";
 
   // gelöste Plaketten
@@ -439,7 +439,7 @@ function zeichne(){
   // Das Nabelwort wird erst ab der zweiten gelösten Gruppe markiert. Nach der
   // ersten trägt es die Farbe dieser Gruppe und sieht aus wie jede andere
   // gelöste Karte — verrät sich also nicht.
-  var zeigeNabel = S.welt==="kinder" || S.modus==="leicht" || S.geloest.length>=2 || S.fertig;
+  var zeigeNabel = S.modus==="leicht" || S.geloest.length>=2 || S.fertig;
   S.reihenfolge.forEach(function(w){
     var nabel = w===S.raetsel.nabel, gi = nabel ? (S.geloest.length?S.geloest[0]:-1) : (fest.hasOwnProperty(w)?fest[w]:-1);
     var markiert = nabel && zeigeNabel;
@@ -518,7 +518,7 @@ function pruefe(){
     zeichne(); sichere();
     if(S.geloest.length===anzahlGruppen()-1){ setTimeout(letzteAufloesen,420); }
     else if(S.geloest.length===anzahlGruppen()){ setTimeout(gewonnen,420); }
-    else if(S.geloest.length===1 && S.modus==="schwer" && S.welt!=="kinder")
+    else if(S.geloest.length===1 && S.modus==="schwer")
       sag(S.raetsel.gruppen[treffer].titel+" — eins dieser drei geht weiter.");
     else sag(S.raetsel.gruppen[treffer].titel);
     return;
@@ -537,7 +537,7 @@ function pruefe(){
     if(n===2) fast=true;
   });
   if(S.welt==="kinder"){
-    if(sel.indexOf(nabel)<0) sag("Das Wort mit dem goldenen Rand gehört immer dazu.");
+    if(sel.indexOf(nabel)<0 && S.geloest.length>=2) sag("Das Wort mit dem goldenen Rand gehört immer dazu.");
     else if(fast) sag("Fast! Zwei davon passen zusammen.");
     else sag("Noch nicht. Probier eine andere Karte.");
   }
@@ -571,8 +571,8 @@ function zeigeErgebnisKinder(st){
   oeffne(
     '<h2>Geschafft!</h2>'+
     '<div class="sterne">'+sterne+'</div>'+
-    '<p>Alle drei Gruppen gefunden. In jeder steckte <b>'+S.raetsel.nabel+'</b> '+
-      (S.raetsel.bilder&&S.raetsel.bilder[S.raetsel.nabel]||"")+' — das Wort passt überall.</p>'+
+    '<p>Alle vier Gruppen gefunden. Das Wort, das überall passte, war <b>'+S.raetsel.nabel+'</b> '+
+      (S.raetsel.bilder&&S.raetsel.bilder[S.raetsel.nabel]||"")+'.</p>'+
     '<div class="stats">'+
       '<div><b>'+st.gespielt+'</b><span>gelöst</span></div>'+
       '<div><b>'+st.serie+'</b><span>Tage in Folge</span></div>'+
@@ -731,10 +731,10 @@ function zeigeHilfe(){
 function zeigeHilfeKinder(){
   oeffne(
     '<h2>So geht’s</h2>'+
-    '<p>Sieben Karten. Immer drei gehören zusammen — und <b>ein Wort passt in alle drei Gruppen</b>. Das Wort hat einen goldenen Rand.</p>'+
+    '<p>Neun Karten. Immer drei gehören zusammen — und <b>ein Wort passt in alle vier Gruppen</b>. Dieses eine Wort musst du finden.</p>'+
     '<ul>'+
       '<li>Tippe drei Karten an, die zusammenpassen. Dann auf <b>Prüfen</b>.</li>'+
-      '<li>Das Wort mit dem goldenen Rand gehört <b>immer</b> dazu.</li>'+
+      '<li>In jeder richtigen Gruppe steckt dasselbe Wort. Ab der zweiten Gruppe bekommt es einen goldenen Rand.</li>'+
       '<li>Stimmt die Gruppe, färben sich die Karten ein und bleiben liegen.</li>'+
       '<li>Falsch geraten kostet nichts. Probier ruhig weiter.</li>'+
       '<li>Mit 🔊 oben wird jedes angetippte Wort vorgelesen.</li>'+

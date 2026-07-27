@@ -86,10 +86,11 @@ const KIND = {
   nabel: "BALL", emoji: "🎉",
   gruppen: [
     { titel: "Spielzeug", woerter: ["PUPPE", "TEDDY"] },
+    { titel: "Beim Fußball", woerter: ["TOR", "SCHUH"] },
     { titel: "Ist rund", woerter: ["RAD", "MOND"] },
-    { titel: "Beim Fußball", woerter: ["TOR", "SCHUH"] }
+    { titel: "Kann hüpfen", woerter: ["FROSCH", "HASE"] }
   ],
-  bilder: { BALL: "⚽", PUPPE: "🪆", TEDDY: "🧸", RAD: "🛞", MOND: "🌕", TOR: "🥅", SCHUH: "👟" }
+  bilder: { BALL: "⚽", PUPPE: "🪆", TEDDY: "🧸", TOR: "🥅", SCHUH: "👟", RAD: "🛞", MOND: "🌕", FROSCH: "🐸", HASE: "🐰" }
 };
 function fuelleKind(doc, r) {
   const setz = (id, v) => {
@@ -106,13 +107,14 @@ function fuelleKind(doc, r) {
   });
 }
 
-test("Kinderwelt zeigt drei Kategorien und Bildfelder", async () => {
+test("Kinderwelt zeigt vier Kategorien und Bildfelder", async () => {
   const w = await lade();
   w.document.getElementById("wKinder").click();
-  assert.strictEqual(w.document.querySelectorAll("fieldset").length, 3);
+  assert.strictEqual(w.document.querySelectorAll("fieldset").length, 4);
   assert.ok(!w.document.getElementById("nabelBildFeld").hidden, "kein Bildfeld fürs Nabelwort");
   assert.ok(w.document.getElementById("ea0"), "kein Bildfeld für das erste Wort");
-  assert.strictEqual(w.document.querySelectorAll("#vorschau .pv").length, 7);
+  assert.ok(w.document.getElementById("eb3"), "kein Bildfeld in der vierten Kategorie");
+  assert.strictEqual(w.document.querySelectorAll("#vorschau .pv").length, 9);
   w.close();
 });
 
@@ -136,17 +138,19 @@ test("vollständiges Kinderrätsel gibt Code mit Bildern aus", async () => {
   const code = w.document.getElementById("ausgabe").value;
   assert.ok(/bilder: \{/.test(code), "keine Bilder im Code");
   assert.ok(code.includes('"BALL": "⚽"'), code);
-  assert.strictEqual((code.match(/titel:/g) || []).length, 3, "falsche Zahl an Kategorien");
+  assert.strictEqual((code.match(/titel:/g) || []).length, 4, "falsche Zahl an Kategorien");
   w.close();
 });
 
-test("der Weltwechsel im Baukasten räumt die vierte Kategorie ab", async () => {
+test("der Weltwechsel blendet nur die Bildfelder ein und aus", async () => {
   const w = await lade();
-  fuelle(w.document, GUT);
-  w.document.getElementById("wKinder").click();
-  assert.strictEqual(w.document.querySelectorAll("fieldset").length, 3);
-  w.document.getElementById("wErwachsen").click();
   assert.strictEqual(w.document.querySelectorAll("fieldset").length, 4);
+  assert.strictEqual(w.document.getElementById("ea0"), null, "Bildfeld bei Erwachsenen");
+  w.document.getElementById("wKinder").click();
+  assert.strictEqual(w.document.querySelectorAll("fieldset").length, 4);
+  assert.ok(w.document.getElementById("ea0"), "kein Bildfeld bei Kindern");
+  w.document.getElementById("wErwachsen").click();
+  assert.strictEqual(w.document.getElementById("ea0"), null, "Bildfeld blieb stehen");
   w.close();
 });
 

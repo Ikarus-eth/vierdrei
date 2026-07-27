@@ -7,12 +7,16 @@ Zwei Welten, eine Maschine:
 
 | | Erwachsene | Kinder |
 |---|---|---|
-| Karten | 9 | 7 |
-| Kategorien | 4 | 3 |
+| Karten | 9 | 9 |
+| Kategorien | 4 | 4 |
+| Nabelwort markiert | ab Kategorie 2 | ab Kategorie 2 |
 | Bilder auf den Karten | nein | ja |
-| Nabelwort markiert | ab Kategorie 2 | von Anfang an |
 | Uhr, Punkte, Fehlerzähler | ja | nein |
 | Vorlesen beim Antippen | nein | ja (abschaltbar) |
+| Wortschatz | beliebig | Grundschule, keine Wortspiele |
+
+Beide Welten haben denselben Aufbau. Der Unterschied liegt allein in Bildern,
+Wortschatz und dem, was weggelassen ist.
 
 Die Wahl steht auf dem Startbildschirm und wird gemerkt; das 🧒/🧑-Symbol oben
 rechts holt sie zurück.
@@ -40,7 +44,7 @@ zur Laufzeit. Lässt sich auf dem iPad zum Homescreen hinzufügen (PWA).
 ## Befehle
 
 ```bash
-./tests/run.sh          # 60 Tests: Rätseldaten, Spiellogik, Baukasten
+./tests/run.sh          # 61 Tests: Rätseldaten, Spiellogik, Baukasten
 python3 -m http.server  # lokal ansehen unter http://localhost:8000
 ```
 
@@ -75,8 +79,8 @@ python3 -m http.server  # lokal ansehen unter http://localhost:8000
 
 `build.html` öffnen, oben die Welt wählen, ausfüllen, „Code kopieren“, ans Ende
 der Liste in `puzzles.js` bzw. `puzzles-kinder.js` hängen, `id` hochzählen,
-`./tests/run.sh`. Im Kindermodus schaltet der Baukasten auf drei Kategorien um
-und verlangt zu jedem Wort ein Bild.
+`./tests/run.sh`. Im Kindermodus verlangt der Baukasten zusätzlich zu jedem der
+neun Wörter ein Bild; sonst ist das Formular in beiden Welten gleich.
 
 „Direktlink kopieren“ packt das Rätsel base64-kodiert in den URL-Hash
 (`index.html#p=…`). So lässt sich ein Rätsel weitergeben, ohne es zu deployen.
@@ -110,7 +114,10 @@ sich, wenn sie durch sind — aktuell nach 21 Tagen (Erwachsene) und 14 Tagen
 - **Kinder haben keine Uhr, keine Punkte und keinen Fehlerzähler.** Fehlversuche
   kosten dort nichts. Einem Sechsjährigen, dem beim Nachdenken eine Uhr zusieht,
   hilft das nicht.
-- **Jede Kinderkarte braucht ein Bild.** Das ist der Grund, warum die Kinderwelt
+- **Kinderpartien laufen immer im Schwer-Modus.** Die Umschaltung ist bei ihnen
+  ausgeblendet; ohne die Zwangsumstellung würde ein in der Erwachsenenwelt
+  gewähltes „leicht“ mitwandern und das Nabelwort sofort verraten.
+- **Jede der neun Kinderkarten braucht ein Bild.** Das ist der Grund, warum die Kinderwelt
   überhaupt funktioniert, wenn das Lesen noch hakt. Der Datentest weist ein
   Rätsel ohne vollständige `bilder` ab.
 - **Beide Welten speichern getrennt** (`vmd.` bzw. `vmd.kinder.`). Sonst
