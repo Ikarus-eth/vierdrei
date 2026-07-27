@@ -62,20 +62,18 @@ header{display:flex;align-items:center;justify-content:space-between;gap:8px;pad
 .modes button[aria-pressed="true"]{background:var(--brass);color:#1A1204;font-weight:600}
 
 /* ---------- Gelöste Kategorien ---------- */
-#geloest{display:flex;flex-direction:column;gap:8px;margin-bottom:var(--gap)}
-.plaque{border-radius:10px;padding:9px 12px;display:flex;flex-direction:column;gap:2px;
+#geloest{display:flex;flex-direction:column;gap:6px;margin-bottom:var(--gap)}
+.plaque{border-radius:9px;padding:7px 11px;display:flex;align-items:center;gap:8px;
   box-shadow:inset 0 0 0 1px #0000001f, 0 1px 0 #ffffff40 inset;animation:drop .32s cubic-bezier(.2,.9,.3,1.2)}
-.plaque .head{display:flex;align-items:center;gap:7px}
 .chip{font-family:var(--mono);font-size:10px;font-weight:600;background:#00000033;border-radius:4px;padding:1px 5px}
 .plaque .titel{font-family:var(--disp);font-weight:500;font-size:14px;letter-spacing:.08em;text-transform:uppercase}
-.plaque .woerter{font-size:12.5px;letter-spacing:.03em;opacity:.9}
 @keyframes drop{from{opacity:0;transform:translateY(-8px) scale(.98)}to{opacity:1;transform:none}}
 
 /* ---------- Raster ---------- */
 #raster{display:flex;flex-wrap:wrap;gap:var(--gap);justify-content:center;margin-bottom:14px}
 .card{
   position:relative; flex:0 0 calc((100% - 2*var(--gap))/3);
-  aspect-ratio:1/.72; min-height:66px;
+  aspect-ratio:1/.64; min-height:60px;
   border:0;border-radius:10px; background:var(--card); color:var(--ink);
   font-family:var(--disp); font-weight:500; letter-spacing:.03em;
   font-size:clamp(11px,3.6vw,17px); line-height:1.1;
@@ -94,8 +92,11 @@ header{display:flex;align-items:center;justify-content:space-between;gap:8px;pad
   -webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
   mask-composite:exclude;pointer-events:none;
 }
-.card.gone{animation:absorb .3s ease forwards}
-@keyframes absorb{to{opacity:0;transform:scale(.7)}}
+.card.fest{cursor:default;box-shadow:inset 0 0 0 1px #00000026}
+.card.fest:active{transform:none}
+.card .num{position:absolute;top:4px;left:6px;font-family:var(--mono);font-size:9px;font-weight:600;opacity:.55}
+.card.frisch{animation:einfaerben .34s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes einfaerben{from{transform:scale(.9)}to{transform:none}}
 #raster.wrong{animation:shake .34s}
 @keyframes shake{10%,90%{transform:translateX(-3px)}30%,70%{transform:translateX(5px)}50%{transform:translateX(-5px)}}
 
@@ -327,15 +328,17 @@ function offeneGruppen(){
   for(var i=0;i<4;i++) if(S.geloest.indexOf(i)<0) o.push(i);
   return o;
 }
-function sichtbareWoerter(){
-  var weg={};
-  S.geloest.forEach(function(gi){ S.raetsel.gruppen[gi].woerter.forEach(function(w){ weg[w]=1; }); });
-  return S.reihenfolge.filter(function(w){ return !weg[w]; });
+/* Alle neun Karten bleiben liegen. Gelöste Nebenwörter werden eingefärbt und
+ * festgesetzt; das Nabelwort bleibt spielbar, bis alle vier Gruppen stehen. */
+function festeWoerter(){
+  var m={};
+  S.geloest.forEach(function(gi){ S.raetsel.gruppen[gi].woerter.forEach(function(w){ m[w]=gi; }); });
+  return m;
 }
+function istFest(w){ return w!==S.raetsel.nabel && festeWoerter().hasOwnProperty(w); }
 
 /* ---------------- Zeichnen ---------------- */
 function ringGradient(){
-  if(!S.geloest.length) return "transparent";
   var teile=[], grad=0, i;
   for(i=0;i<4;i++){
     var farbe = i<S.geloest.length ? TIER[S.geloest[i]].farbe : "#D9A44133";
@@ -357,24 +360,38 @@ function zeichne(){
     var gr=S.raetsel.gruppen[gi], t=TIER[gi];
     var el=document.createElement("div");
     el.className="plaque"; el.style.background=t.farbe; el.style.color=t.schrift;
-    el.innerHTML='<div class="head"><span class="chip">'+(gi+1)+'</span><span class="titel"></span></div>'+
-                 '<div class="woerter"></div>';
+    el.innerHTML='<span class="chip">'+(gi+1)+'</span><span class="titel"></span>';
     el.querySelector(".titel").textContent=gr.titel;
-    el.querySelector(".woerter").textContent=[S.raetsel.nabel].concat(gr.woerter).join(" · ");
     g.appendChild(el);
   });
 
-  // Raster
+  // Raster — immer neun Karten
   var r=$("raster"); r.innerHTML="";
-  var zeigeNabel = S.modus==="leicht" || S.geloest.length>0 || S.fertig;
-  sichtbareWoerter().forEach(function(w){
+  var fest=festeWoerter();
+  // Das Nabelwort wird erst ab der zweiten gelösten Gruppe markiert. Nach der
+  // ersten trägt es die Farbe dieser Gruppe und sieht aus wie jede andere
+  // gelöste Karte — verrät sich also nicht.
+  var zeigeNabel = S.modus==="leicht" || S.geloest.length>=2 || S.fertig;
+  S.reihenfolge.forEach(function(w){
+    var nabel = w===S.raetsel.nabel, gi = nabel ? (S.geloest.length?S.geloest[0]:-1) : (fest.hasOwnProperty(w)?fest[w]:-1);
+    var markiert = nabel && zeigeNabel;
     var b=document.createElement("button");
-    b.className="card"+(w===S.raetsel.nabel&&zeigeNabel?" hub":"");
     b.type="button";
-    b.setAttribute("aria-pressed", sel.indexOf(w)>=0);
+    b.className="card"+(markiert?" hub":"")+(!nabel&&gi>=0?" fest":"");
     b.innerHTML="<span></span>"; b.querySelector("span").textContent=w;
-    if(w===S.raetsel.nabel&&zeigeNabel) b.style.setProperty("--ring", ringGradient());
-    b.addEventListener("click",function(){ tippe(w,b); });
+    var gewaehlt = sel.indexOf(w)>=0;
+    if(gi>=0 && !markiert){
+      if(!gewaehlt){ b.style.background=TIER[gi].farbe; b.style.color=TIER[gi].schrift; }
+      var n=document.createElement("i"); n.className="num"; n.textContent=gi+1;
+      b.appendChild(n);
+    }
+    if(markiert) b.style.setProperty("--ring", ringGradient());
+    if(!nabel && gi>=0){
+      b.disabled=true; b.setAttribute("aria-label", w+" — gelöst, Stufe "+(gi+1));
+    }else{
+      b.setAttribute("aria-pressed", gewaehlt);
+      b.addEventListener("click",function(){ tippe(w); });
+    }
     r.appendChild(b);
   });
 
@@ -395,15 +412,12 @@ setInterval(function(){ if(S&&!S.fertig) uhrZeichne(); },1000);
 function sag(text){ $("msg").textContent=text||""; }
 
 /* ---------------- Spielzüge ---------------- */
-function tippe(w,el){
-  if(S.fertig) return;
+function tippe(w){
+  if(S.fertig||istFest(w)) return;
   var i=sel.indexOf(w);
   if(i>=0) sel.splice(i,1);
   else { if(sel.length===3) return; sel.push(w); }
-  el.setAttribute("aria-pressed", sel.indexOf(w)>=0);
-  $("btnLeeren").disabled=sel.length===0;
-  $("btnPruefen").disabled=sel.length!==3;
-  sag("");
+  zeichne(); sag("");
 }
 
 function pruefe(){
@@ -423,6 +437,8 @@ function pruefe(){
     zeichne(); sichere();
     if(S.geloest.length===3){ setTimeout(letzteAufloesen,420); }
     else if(S.geloest.length===4){ setTimeout(gewonnen,420); }
+    else if(S.geloest.length===1 && S.modus==="schwer")
+      sag(S.raetsel.gruppen[treffer].titel+" — eins dieser drei geht weiter.");
     else sag(S.raetsel.gruppen[treffer].titel);
     return;
   }
@@ -583,9 +599,9 @@ function zeigeHilfe(){
     '<ul>'+
       '<li>Wähle drei Wörter und drücke <b>Prüfen</b>.</li>'+
       '<li>Jede richtige Dreiergruppe enthält zwangsläufig das Nabelwort. Wenn du es kennst, brauchst du nur noch zwei.</li>'+
-      '<li>Gelöste Kategorien wandern nach oben, das Nabelwort bleibt im Raster.</li>'+
+      '<li>Alle neun Karten bleiben liegen. Gelöste Wörter färben sich in der Farbe ihrer Kategorie ein und lassen sich nicht mehr antippen.</li>'+
       '<li>Die Farben zeigen die Schwierigkeit: <b>1</b> gelb am einfachsten, <b>4</b> lila am fiesesten. Sie sind kein Hinweis auf die Lösung.</li>'+
-      '<li>Der Ring um das Nabelwort füllt sich pro gelöster Kategorie um ein Viertel.</li>'+
+      '<li>Nach der ersten Kategorie trägt auch das Nabelwort deren Farbe — es sieht aus wie gelöst, bleibt aber anwählbar. Erst ab der zweiten Kategorie bekommt es seinen Ring, der sich pro gelöster Gruppe um ein Viertel füllt.</li>'+
     '</ul>'+
     '<h3>Leicht oder schwer</h3>'+
     '<p><b>Leicht</b> markiert das Nabelwort von Anfang an — dafür gibt es 25 % weniger Punkte. <b>Schwer</b> verrät nichts.</p>'+
@@ -670,9 +686,12 @@ document.addEventListener("click",function(e){
 $("btnPruefen").onclick=pruefe;
 $("btnLeeren").onclick=function(){ sel=[]; zeichne(); sag(""); };
 $("btnMischen").onclick=function(){
-  var sicht=sichtbareWoerter(), neu=mische(sicht);
-  var rest=S.reihenfolge.filter(function(w){ return sicht.indexOf(w)<0; });
-  S.reihenfolge=neu.concat(rest);
+  // Gelöste Karten behalten ihren Platz, sonst zerfällt das Farbmuster.
+  var plaetze=[], frei=[];
+  S.reihenfolge.forEach(function(w,i){ if(!istFest(w)){ plaetze.push(i); frei.push(w); } });
+  var neu=mische(frei), kopie=S.reihenfolge.slice();
+  plaetze.forEach(function(i,k){ kopie[i]=neu[k]; });
+  S.reihenfolge=kopie;
   zeichne(); sichere();
 };
 function setzeModus(m){

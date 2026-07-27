@@ -35,8 +35,12 @@ function neuerTick(window, ms) {
 function karten(doc) {
   return Array.from(doc.querySelectorAll("#raster .card"));
 }
+function wortVon(k) {
+  // Gelöste Karten tragen zusätzlich die Stufenziffer.
+  return k.querySelector("span").textContent.trim();
+}
 function karte(doc, wort) {
-  return karten(doc).find((k) => k.textContent.trim() === wort);
+  return karten(doc).find((k) => wortVon(k) === wort);
 }
 function waehle(doc, woerter) {
   woerter.forEach((w) => {
@@ -58,4 +62,4 @@ function offen(doc) {
   return doc.getElementById("sheet").classList.contains("open");
 }
 
-module.exports = { lade, neuerTick, karten, karte, waehle, pruefe, plaketten, meldung, offen, ROOT };
+module.exports = { lade, neuerTick, karten, karte, wortVon, waehle, pruefe, plaketten, meldung, offen, ROOT };

@@ -25,7 +25,7 @@ test("alle neun Karten sind genau die Rätselwörter", async () => {
   const { window, doc } = await H.lade();
   const { r } = heutigesRaetsel(window);
   const soll = [r.nabel].concat(...r.gruppen.map((g) => g.woerter)).sort();
-  const ist = H.karten(doc).map((k) => k.textContent.trim()).sort();
+  const ist = H.karten(doc).map(H.wortVon).sort();
   assert.deepStrictEqual(ist, soll);
   window.close();
 });
@@ -43,28 +43,68 @@ test("Prüfen ist erst bei genau drei ausgewählten Wörtern möglich", async ()
 
 test("mehr als drei Wörter lassen sich nicht auswählen", async () => {
   const { window, doc } = await H.lade();
-  const alle = H.karten(doc).map((k) => k.textContent.trim());
+  const alle = H.karten(doc).map(H.wortVon);
   H.waehle(doc, alle.slice(0, 4));
   const aktiv = H.karten(doc).filter((k) => k.getAttribute("aria-pressed") === "true");
   assert.strictEqual(aktiv.length, 3);
   window.close();
 });
 
-test("richtige Gruppe: Plakette erscheint, zwei Karten verschwinden, Nabelwort bleibt", async () => {
+test("alle neun Karten bleiben bis zum Schluss liegen", async () => {
+  const { window, doc } = await H.lade();
+  const { r } = heutigesRaetsel(window);
+  for (let i = 0; i < 3; i++) {
+    H.waehle(doc, gruppe(r, i));
+    H.pruefe(doc);
+    await H.neuerTick(window, 30);
+    assert.strictEqual(H.karten(doc).length, 9, "nach " + (i + 1) + " Gruppen");
+  }
+  await H.neuerTick(window, 1000);
+  assert.strictEqual(H.karten(doc).length, 9, "nach dem Sieg");
+  window.close();
+});
+
+test("gelöste Nebenwörter werden markiert und festgesetzt", async () => {
   const { window, doc } = await H.lade();
   const { r } = heutigesRaetsel(window);
   H.waehle(doc, gruppe(r, 0));
   H.pruefe(doc);
   await H.neuerTick(window, 30);
   assert.strictEqual(H.plaketten(doc).length, 1, "keine Plakette");
-  assert.strictEqual(H.karten(doc).length, 7, "falsche Kartenzahl");
-  assert.ok(H.karte(doc, r.nabel), "Nabelwort wurde entfernt");
-  r.gruppen[0].woerter.forEach((w) =>
-    assert.ok(!H.karte(doc, w), w + " liegt noch im Raster"));
+  r.gruppen[0].woerter.forEach((w) => {
+    const k = H.karte(doc, w);
+    assert.ok(k, w + " fehlt im Raster");
+    assert.ok(k.classList.contains("fest"), w + " ist nicht als gelöst markiert");
+    assert.ok(k.disabled, w + " ist noch anwählbar");
+    assert.ok(k.style.background, w + " hat keine Stufenfarbe");
+  });
   window.close();
 });
 
-test("die Plakette nennt Titel und alle drei Wörter", async () => {
+test("ein gelöstes Wort lässt sich nicht mehr auswählen", async () => {
+  const { window, doc } = await H.lade();
+  const { r } = heutigesRaetsel(window);
+  H.waehle(doc, gruppe(r, 0));
+  H.pruefe(doc);
+  await H.neuerTick(window, 30);
+  H.karte(doc, r.gruppen[0].woerter[0]).click();
+  const aktiv = H.karten(doc).filter((k) => k.getAttribute("aria-pressed") === "true");
+  assert.strictEqual(aktiv.length, 0, "gelöstes Wort wurde ausgewählt");
+  window.close();
+});
+
+test("das Nabelwort bleibt nach einem Treffer anwählbar", async () => {
+  const { window, doc } = await H.lade();
+  const { r } = heutigesRaetsel(window);
+  H.waehle(doc, gruppe(r, 0));
+  H.pruefe(doc);
+  await H.neuerTick(window, 30);
+  H.karte(doc, r.nabel).click();
+  assert.strictEqual(H.karte(doc, r.nabel).getAttribute("aria-pressed"), "true");
+  window.close();
+});
+
+test("die Plakette nennt die Kategorie", async () => {
   const { window, doc } = await H.lade();
   const { r } = heutigesRaetsel(window);
   H.waehle(doc, gruppe(r, 0));
@@ -72,7 +112,6 @@ test("die Plakette nennt Titel und alle drei Wörter", async () => {
   await H.neuerTick(window, 30);
   const p = H.plaketten(doc)[0].textContent;
   assert.ok(p.includes(r.gruppen[0].titel), "Titel fehlt");
-  gruppe(r, 0).forEach((w) => assert.ok(p.includes(w), w + " fehlt auf der Plakette"));
   window.close();
 });
 
@@ -167,17 +206,36 @@ test("Leicht-Modus markiert das Nabelwort sofort", async () => {
   doc.getElementById("modeLeicht").click();
   const hub = doc.querySelectorAll("#raster .card.hub");
   assert.strictEqual(hub.length, 1, "kein markiertes Nabelwort");
-  assert.strictEqual(hub[0].textContent.trim(), r.nabel);
+  assert.strictEqual(H.wortVon(hub[0]), r.nabel);
   window.close();
 });
 
-test("nach dem ersten Treffer ist das Nabelwort auch im Schwer-Modus markiert", async () => {
+test("nach der ersten Gruppe ist das Nabelwort noch nicht markiert", async () => {
+  // Es trägt dann die Farbe dieser Gruppe und sieht aus wie die beiden anderen
+  // gelösten Karten — nur so bleibt es im Schwer-Modus eine Runde länger offen.
   const { window, doc } = await H.lade();
   const { r } = heutigesRaetsel(window);
   H.waehle(doc, gruppe(r, 0));
   H.pruefe(doc);
   await H.neuerTick(window, 30);
-  assert.strictEqual(doc.querySelectorAll("#raster .card.hub").length, 1);
+  assert.strictEqual(doc.querySelectorAll("#raster .card.hub").length, 0, "zu früh markiert");
+  const k = H.karte(doc, r.nabel);
+  assert.ok(k.style.background, "Nabelwort trägt keine Stufenfarbe");
+  assert.ok(!k.disabled, "Nabelwort wurde festgesetzt");
+  window.close();
+});
+
+test("nach der zweiten Gruppe ist das Nabelwort markiert", async () => {
+  const { window, doc } = await H.lade();
+  const { r } = heutigesRaetsel(window);
+  for (let i = 0; i < 2; i++) {
+    H.waehle(doc, gruppe(r, i));
+    H.pruefe(doc);
+    await H.neuerTick(window, 30);
+  }
+  const hub = doc.querySelectorAll("#raster .card.hub");
+  assert.strictEqual(hub.length, 1, "nicht markiert");
+  assert.strictEqual(H.wortVon(hub[0]), r.nabel);
   window.close();
 });
 
@@ -194,10 +252,23 @@ test("der Modus lässt sich nach dem ersten Treffer nicht mehr wechseln", async 
 
 test("Mischen ändert die Reihenfolge, nicht den Kartensatz", async () => {
   const { window, doc } = await H.lade();
-  const vorher = H.karten(doc).map((k) => k.textContent.trim());
+  const vorher = H.karten(doc).map(H.wortVon);
   doc.getElementById("btnMischen").click();
-  const nachher = H.karten(doc).map((k) => k.textContent.trim());
+  const nachher = H.karten(doc).map(H.wortVon);
   assert.deepStrictEqual(nachher.slice().sort(), vorher.slice().sort(), "Kartensatz verändert");
+  window.close();
+});
+
+test("Mischen lässt gelöste Karten auf ihrem Platz", async () => {
+  const { window, doc } = await H.lade();
+  const { r } = heutigesRaetsel(window);
+  H.waehle(doc, gruppe(r, 0));
+  H.pruefe(doc);
+  await H.neuerTick(window, 30);
+  const platz = (w) => H.karten(doc).findIndex((k) => H.wortVon(k) === w);
+  const vorher = r.gruppen[0].woerter.map(platz);
+  doc.getElementById("btnMischen").click();
+  assert.deepStrictEqual(r.gruppen[0].woerter.map(platz), vorher, "gelöste Karte ist gewandert");
   window.close();
 });
 

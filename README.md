@@ -25,7 +25,7 @@ zur Laufzeit. Lässt sich auf dem iPad zum Homescreen hinzufügen (PWA).
 ## Befehle
 
 ```bash
-./tests/run.sh          # 38 Tests: Rätseldaten, Spiellogik, Baukasten
+./tests/run.sh          # 43 Tests: Rätseldaten, Spiellogik, Baukasten
 python3 -m http.server  # lokal ansehen unter http://localhost:8000
 ```
 
@@ -33,9 +33,17 @@ python3 -m http.server  # lokal ansehen unter http://localhost:8000
 
 ## Spielregeln im Code
 
-- Jede richtige Dreiergruppe enthält zwangsläufig das Nabelwort. Deshalb bleibt
-  die Nabelkarte im Raster stehen, während die anderen beiden verschwinden:
-  9 → 7 → 5 → 3 Karten. Bei drei Karten löst sich die letzte Gruppe von selbst auf.
+- Jede richtige Dreiergruppe enthält zwangsläufig das Nabelwort. Alle neun Karten
+  bleiben von Anfang bis Ende liegen; gelöste Nebenwörter werden in der Farbe
+  ihrer Kategorie eingefärbt, bekommen die Stufenziffer und werden festgesetzt.
+  Sind drei Gruppen gelöst, löst sich die vierte von selbst auf.
+- Das Nabelwort wird im Schwer-Modus **erst ab der zweiten** gelösten Kategorie
+  markiert. Nach der ersten trägt es deren Farbe und sieht aus wie eine gelöste
+  Karte — bleibt aber anwählbar. Es früher zu markieren nimmt dem Rätsel eine
+  ganze Runde Spannung; wer die Karten stattdessen verschwinden lässt, verrät es
+  ebenfalls sofort.
+- Mischen rührt nur die freien Karten um. Gelöste bleiben auf ihrem Platz, sonst
+  zerfällt das Farbmuster der bereits gelösten Gruppen.
 - **Leicht** markiert das Nabelwort von Anfang an, kostet dafür 25 % der Punkte.
   **Schwer** verrät nichts. Der Modus lässt sich nach dem ersten Treffer nicht
   mehr wechseln — sonst könnte man ihn nach dem ersten Treffer zurückstellen und
